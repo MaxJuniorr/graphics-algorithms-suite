@@ -37,42 +37,27 @@ class PainelControle:
 
     def construir_interface(self):
         """Cria os elementos da GUI no painel de controle."""
-        # --- Seção de Seleção de Figura ---
-        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, 10), (180, 20)), text='Selecione a Figura', manager=self.ui_manager)
-        self.seletor_figura = pygame_gui.elements.UIDropDownMenu(
-            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse'],
-            starting_option='Linha (Bresenham)',
-            relative_rect=pygame.Rect((self.largura_canvas + 10, 40), (180, 30)),
-            manager=self.ui_manager
-        )
-
         # --- Seção de Resolução ---
         pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, 80), (180, 20)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, 10), (180, 20)),
             text='Configuração da Grade',
             manager=self.ui_manager
         )
         
-        pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, 110), (80, 20)),
-            text='Largura:',
-            manager=self.ui_manager
-        )
-        
         self.entrada_largura = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((self.largura_canvas + 90, 110), (100, 30)),
+            relative_rect=pygame.Rect((self.largura_canvas + 90, 40), (100, 30)),
             manager=self.ui_manager,
             object_id='#largura_grid'
         )
         
         pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, 150), (80, 20)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, 80), (80, 20)),
             text='Altura:',
             manager=self.ui_manager
         )
         
         self.entrada_altura = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((self.largura_canvas + 90, 150), (100, 30)),
+            relative_rect=pygame.Rect((self.largura_canvas + 90, 80), (100, 30)),
             manager=self.ui_manager,
             object_id='#altura_grid'
         )
@@ -81,14 +66,28 @@ class PainelControle:
         self.entrada_altura.set_text('80')   # Valor inicial
         
         self.botao_aplicar_res = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, 190), (180, 40)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, 120), (180, 40)),
             text='Aplicar Resolução',
             manager=self.ui_manager,
             object_id='#botao_aplicar_res'
         )
 
+        # --- Seção de Seleção de Figura ---
+        pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, 180), (180, 20)),
+            text='Selecione a Figura',
+            manager=self.ui_manager
+        )
+        
+        self.seletor_figura = pygame_gui.elements.UIDropDownMenu(
+            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse'],
+            starting_option='Linha (Bresenham)',
+            relative_rect=pygame.Rect((self.largura_canvas + 10, 210), (180, 30)),
+            manager=self.ui_manager
+        )
+
         # Base position for figure parameters
-        base_y = 250  # Aumentado para dar mais espaço após os controles de resolução
+        base_y = 260  # Posição base para os parâmetros da figura selecionada
         
         # --- Elementos para Linha (Bresenham) ---
         self.elementos_linha['label_p1'] = pygame_gui.elements.UILabel(

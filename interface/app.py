@@ -3,12 +3,12 @@ import pygame_gui
 from interface.painel_controle import PainelControle
 from interface.area_desenho import AreaDesenho
 from algoritmos.bresenham import calcular_linha_bresenham
-from algoritmos.circulo_elipse import calcular_circulo
+from algoritmos.circulo_elipse import calcular_circulo, calcular_elipse
 from algoritmos.curvas_bezier import rasterizar_curva_bezier
 
 # --- Constantes de Layout ---
 LARGURA_TOTAL = 1200
-ALTURA_TOTAL = 800
+ALTURA_TOTAL = 950
 LARGURA_PAINEL = 400
 LARGURA_CANVAS = LARGURA_TOTAL - LARGURA_PAINEL
 ALTURA_CANVAS = ALTURA_TOTAL
@@ -89,6 +89,16 @@ class Aplicacao:
                 self.area_desenho.adicionar_pixels(pixels)
             except ValueError:
                 print("Erro: As coordenadas dos pontos de controle devem ser números inteiros.")
+        
+        elif evento.ui_element == painel.botao_elipse:
+            try:
+                centro = (int(painel.entrada_elipse_centro_x.get_text()), int(painel.entrada_elipse_centro_y.get_text()))
+                rx = int(painel.entrada_elipse_rx.get_text())
+                ry = int(painel.entrada_elipse_ry.get_text())
+                pixels = calcular_elipse(centro, rx, ry)
+                self.area_desenho.adicionar_pixels(pixels)
+            except ValueError:
+                print("Erro: As coordenadas do centro e os raios devem ser números inteiros.")
                         
         elif evento.ui_element == painel.botao_limpar:
             self.area_desenho.limpar_pixels()

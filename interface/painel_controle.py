@@ -80,5 +80,22 @@ class PainelControle:
         self.entrada_b_p3_y.set_text('50')
         self.botao_bezier = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, 710), (180, 40)), text='Desenhar Curva', manager=self.ui_manager, object_id='#botao_bezier')
 
+        # --- Seção para Elipse ---
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, 750), (180, 20)), text='Ponto Médio (Elipse)', manager=self.ui_manager)
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, 780), (60, 20)), text='Centro:', manager=self.ui_manager)
+        self.entrada_elipse_centro_x = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 70, 780), (55, 30)), manager=self.ui_manager)
+        self.entrada_elipse_centro_y = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 135, 780), (55, 30)), manager=self.ui_manager)
+        self.entrada_elipse_centro_x.set_text('40')
+        self.entrada_elipse_centro_y.set_text('40')
+        
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, 810), (35, 20)), text='RX:', manager=self.ui_manager)
+        self.entrada_elipse_rx = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 45, 810), (60, 30)), manager=self.ui_manager)
+        self.entrada_elipse_rx.set_text('30')
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 115, 810), (35, 20)), text='RY:', manager=self.ui_manager)
+        self.entrada_elipse_ry = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, 810), (60, 30)), manager=self.ui_manager)
+        self.entrada_elipse_ry.set_text('20')
+
+        self.botao_elipse = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, 850), (180, 40)), text='Desenhar Elipse', manager=self.ui_manager, object_id='#botao_elipse')
+
         # --- Botão para limpar a tela (movido para o final) ---
-        self.botao_limpar = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, 760), (180, 40)), text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
+        self.botao_limpar = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, 900), (180, 40)), text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')

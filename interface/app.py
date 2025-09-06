@@ -159,7 +159,7 @@ class Aplicacao:
                 for pixel in self.pixels_a_desenhar:
                     self.desenhar_pixel(pixel[0], pixel[1])
             self.tela.blit(self.canvas_surface, (0, 0))
-            pygame.draw.rect(self.tela, (60, 60, 60), (LARGURA_CANVAS, 0, LARGURA_PAINEL, ALTURA_TOTAL))
+            pygame.draw.rect(self.tela, COR_PAINEL, (LARGURA_CANVAS, 0, LARGURA_PAINEL, ALTURA_TOTAL))
             self.ui_manager.draw_ui(self.tela)
             pygame.display.flip()
 

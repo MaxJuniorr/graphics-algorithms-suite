@@ -39,19 +39,19 @@ class PainelControle:
         """Cria os elementos da GUI no painel de controle."""
         # --- Seção de Histórico (Canto superior direito) ---
         margem_direita = 10
-        posicao_x = self.largura_canvas + self.largura_painel - 180 - margem_direita
+        self.posicao_x_historico = self.largura_canvas + self.largura_painel - 180 - margem_direita
         
         # Título do histórico
         pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((posicao_x, 10), (180, 20)),
+            relative_rect=pygame.Rect((self.posicao_x_historico, 10), (180, 20)),
             text='Histórico de Desenhos',
             manager=self.ui_manager
         )
 
-        # Área de texto para o histórico
+        # Área de texto para o histórico com barra de rolagem
         self.historico_texto = pygame_gui.elements.UITextBox(
             html_text="Nenhum desenho realizado",
-            relative_rect=pygame.Rect((posicao_x, 40), (180, 150)),
+            relative_rect=pygame.Rect((self.posicao_x_historico, 40), (180, 150)),
             manager=self.ui_manager
         )
 
@@ -279,30 +279,33 @@ class PainelControle:
             return
         
         texto_historico = "<body>"
-        for i, desenho in enumerate(historico, 1):
+        for i, desenho in enumerate(reversed(historico), 1):  # Inverte a ordem para mostrar mais recentes primeiro
             texto_historico += f"<b>{i}. {desenho.tipo}</b><br>"
+            
             # Formata os parâmetros de forma mais legível
             if desenho.tipo == "Linha (Bresenham)":
                 p1 = desenho.parametros['p1']
                 p2 = desenho.parametros['p2']
-                texto_historico += f"P1: ({p1[0]}, {p1[1]})<br>"
-                texto_historico += f"P2: ({p2[0]}, {p2[1]})<br>"
+                texto_historico += f"    P1: ({p1[0]}, {p1[1]})<br>"
+                texto_historico += f"    P2: ({p2[0]}, {p2[1]})<br>"
             elif desenho.tipo == "Círculo":
                 centro = desenho.parametros['centro']
                 raio = desenho.parametros['raio']
-                texto_historico += f"Centro: ({centro[0]}, {centro[1]})<br>"
-                texto_historico += f"Raio: {raio}<br>"
+                texto_historico += f"    Centro: ({centro[0]}, {centro[1]})<br>"
+                texto_historico += f"    Raio: {raio}<br>"
             elif desenho.tipo == "Curva de Bézier":
                 for i, p in enumerate(['p0', 'p1', 'p2', 'p3']):
                     ponto = desenho.parametros[p]
-                    texto_historico += f"P{i}: ({ponto[0]}, {ponto[1]})<br>"
+                    texto_historico += f"    P{i}: ({ponto[0]}, {ponto[1]})<br>"
             elif desenho.tipo == "Elipse":
                 centro = desenho.parametros['centro']
-                texto_historico += f"Centro: ({centro[0]}, {centro[1]})<br>"
-                texto_historico += f"RX: {desenho.parametros['rx']}, RY: {desenho.parametros['ry']}<br>"
+                texto_historico += f"    Centro: ({centro[0]}, {centro[1]})<br>"
+                texto_historico += f"    RX: {desenho.parametros['rx']}, RY: {desenho.parametros['ry']}<br>"
             
-            texto_historico += f"<small>Hora: {desenho.timestamp.strftime('%H:%M:%S')}</small><br><br>"
+            texto_historico += f"<i>Hora: {desenho.timestamp.strftime('%H:%M:%S')}</i><br><br>"
         
         texto_historico += "</body>"
+        self.historico_texto.html_text = texto_historico
+        self.historico_texto.rebuild()
         self.historico_texto.html_text = texto_historico
         self.historico_texto.rebuild()

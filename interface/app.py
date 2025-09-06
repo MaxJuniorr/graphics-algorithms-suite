@@ -55,7 +55,6 @@ class Aplicacao:
                 elif evento.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     if evento.ui_element == self.painel_controle.seletor_figura:
                         self.painel_controle.mostrar_elementos_figura(evento.text)
-
                 self.ui_manager.process_events(evento)
                 
             # Atualiza o histórico a cada frame
@@ -84,41 +83,6 @@ class Aplicacao:
                 print("Erro: A resolução deve ser um número inteiro.")
         
         # Botões de Desenho
-        elif evento.ui_element == painel.elementos_linha.get('botao'):
-            try:
-                p1 = (int(painel.elementos_linha['p1_x'].get_text()), 
-                      int(painel.elementos_linha['p1_y'].get_text()))
-                p2 = (int(painel.elementos_linha['p2_x'].get_text()), 
-                      int(painel.elementos_linha['p2_y'].get_text()))
-                pixels = calcular_linha_bresenham(p1, p2)
-                self.area_desenho.adicionar_pixels(pixels)
-            except ValueError:
-                print("Erro: As coordenadas da linha devem ser números inteiros.")
-
-        elif evento.ui_element == painel.elementos_circulo.get('botao'):
-            try:
-                centro = (int(painel.elementos_circulo['centro_x'].get_text()),
-                         int(painel.elementos_circulo['centro_y'].get_text()))
-                raio = int(painel.elementos_circulo['raio'].get_text())
-                pixels = calcular_circulo(centro, raio)
-                self.area_desenho.adicionar_pixels(pixels)
-            except ValueError:
-                print("Erro: As coordenadas do centro e o raio devem ser números inteiros.")
-
-        elif evento.ui_element == painel.elementos_bezier.get('botao'):
-            try:
-                p0 = (int(painel.elementos_bezier['p0_x'].get_text()),
-                      int(painel.elementos_bezier['p0_y'].get_text()))
-                p1 = (int(painel.elementos_bezier['p1_x'].get_text()),
-                      int(painel.elementos_bezier['p1_y'].get_text()))
-                p2 = (int(painel.elementos_bezier['p2_x'].get_text()),
-                      int(painel.elementos_bezier['p2_y'].get_text()))
-                p3 = (int(painel.elementos_bezier['p3_x'].get_text()),
-                      int(painel.elementos_bezier['p3_y'].get_text()))
-                pixels = rasterizar_curva_bezier(p0, p1, p2, p3)
-                self.area_desenho.adicionar_pixels(pixels)
-            except ValueError:
-                print("Erro: As coordenadas dos pontos de controle devem ser números inteiros.")
         
         elif evento.ui_element == painel.elementos_linha.get('botao'):
             try:

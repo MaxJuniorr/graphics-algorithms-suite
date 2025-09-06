@@ -18,6 +18,8 @@ class PainelControle:
         self.entrada_largura = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 90, 40), (100, 30)), manager=self.ui_manager, object_id='#largura_grid')
         pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, 80), (80, 20)), text='Altura:', manager=self.ui_manager)
         self.entrada_altura = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 90, 80), (100, 30)), manager=self.ui_manager, object_id='#altura_grid')
+        self.entrada_largura.set_text('80')  # Valor inicial
+        self.entrada_altura.set_text('80')   # Valor inicial
         self.botao_aplicar_res = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, 120), (180, 40)), text='Aplicar Resolução', manager=self.ui_manager, object_id='#botao_aplicar_res')
 
         # --- Seção para o Algoritmo de Bresenham ---

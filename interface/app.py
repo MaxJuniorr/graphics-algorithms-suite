@@ -38,6 +38,9 @@ class Aplicacao:
                 
                 if evento.type == pygame_gui.UI_BUTTON_PRESSED:
                     self.manipular_eventos_ui(evento)
+                elif evento.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                    if evento.ui_element == self.painel_controle.seletor_figura:
+                        self.painel_controle.mostrar_elementos_figura(evento.text)
 
                 self.ui_manager.process_events(evento)
             
@@ -53,6 +56,8 @@ class Aplicacao:
 
     def manipular_eventos_ui(self, evento):
         painel = self.painel_controle
+        
+        # Botão de Resolução
         if evento.ui_element == painel.botao_aplicar_res:
             try:
                 nova_largura = int(painel.entrada_largura.get_text())
@@ -61,40 +66,49 @@ class Aplicacao:
             except ValueError:
                 print("Erro: A resolução deve ser um número inteiro.")
         
-        elif evento.ui_element == painel.botao_bresenham:
+        # Botões de Desenho
+        elif evento.ui_element == painel.elementos_linha.get('botao'):
             try:
-                p1 = (int(painel.entrada_p1_x.get_text()), int(painel.entrada_p1_y.get_text()))
-                p2 = (int(painel.entrada_p2_x.get_text()), int(painel.entrada_p2_y.get_text()))
+                p1 = (int(painel.elementos_linha['p1_x'].get_text()), 
+                      int(painel.elementos_linha['p1_y'].get_text()))
+                p2 = (int(painel.elementos_linha['p2_x'].get_text()), 
+                      int(painel.elementos_linha['p2_y'].get_text()))
                 pixels = calcular_linha_bresenham(p1, p2)
                 self.area_desenho.adicionar_pixels(pixels)
             except ValueError:
                 print("Erro: As coordenadas da linha devem ser números inteiros.")
 
-        elif evento.ui_element == painel.botao_circulo:
+        elif evento.ui_element == painel.elementos_circulo.get('botao'):
             try:
-                centro = (int(painel.entrada_centro_x.get_text()), int(painel.entrada_centro_y.get_text()))
-                raio = int(painel.entrada_raio.get_text())
+                centro = (int(painel.elementos_circulo['centro_x'].get_text()),
+                         int(painel.elementos_circulo['centro_y'].get_text()))
+                raio = int(painel.elementos_circulo['raio'].get_text())
                 pixels = calcular_circulo(centro, raio)
                 self.area_desenho.adicionar_pixels(pixels)
             except ValueError:
-                 print("Erro: As coordenadas do centro e o raio devem ser números inteiros.")
+                print("Erro: As coordenadas do centro e o raio devem ser números inteiros.")
 
-        elif evento.ui_element == painel.botao_bezier:
+        elif evento.ui_element == painel.elementos_bezier.get('botao'):
             try:
-                p0 = (int(painel.entrada_b_p0_x.get_text()), int(painel.entrada_b_p0_y.get_text()))
-                p1 = (int(painel.entrada_b_p1_x.get_text()), int(painel.entrada_b_p1_y.get_text()))
-                p2 = (int(painel.entrada_b_p2_x.get_text()), int(painel.entrada_b_p2_y.get_text()))
-                p3 = (int(painel.entrada_b_p3_x.get_text()), int(painel.entrada_b_p3_y.get_text()))
+                p0 = (int(painel.elementos_bezier['p0_x'].get_text()),
+                      int(painel.elementos_bezier['p0_y'].get_text()))
+                p1 = (int(painel.elementos_bezier['p1_x'].get_text()),
+                      int(painel.elementos_bezier['p1_y'].get_text()))
+                p2 = (int(painel.elementos_bezier['p2_x'].get_text()),
+                      int(painel.elementos_bezier['p2_y'].get_text()))
+                p3 = (int(painel.elementos_bezier['p3_x'].get_text()),
+                      int(painel.elementos_bezier['p3_y'].get_text()))
                 pixels = rasterizar_curva_bezier(p0, p1, p2, p3)
                 self.area_desenho.adicionar_pixels(pixels)
             except ValueError:
                 print("Erro: As coordenadas dos pontos de controle devem ser números inteiros.")
         
-        elif evento.ui_element == painel.botao_elipse:
+        elif evento.ui_element == painel.elementos_elipse.get('botao'):
             try:
-                centro = (int(painel.entrada_elipse_centro_x.get_text()), int(painel.entrada_elipse_centro_y.get_text()))
-                rx = int(painel.entrada_elipse_rx.get_text())
-                ry = int(painel.entrada_elipse_ry.get_text())
+                centro = (int(painel.elementos_elipse['centro_x'].get_text()),
+                         int(painel.elementos_elipse['centro_y'].get_text()))
+                rx = int(painel.elementos_elipse['rx'].get_text())
+                ry = int(painel.elementos_elipse['ry'].get_text())
                 pixels = calcular_elipse(centro, rx, ry)
                 self.area_desenho.adicionar_pixels(pixels)
             except ValueError:

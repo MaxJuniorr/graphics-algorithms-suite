@@ -1,8 +1,8 @@
 # interface/app.py
 import pygame
 import pygame_gui
-# ### NOVO ### - Importa a nossa função do algoritmo
 from algoritmos.bresenham import calcular_linha_bresenham
+from algoritmos.circulo_elipse import calcular_circulo
 
 # --- Constantes de Cores ---
 COR_FUNDO = (20, 20, 20)
@@ -26,7 +26,6 @@ class Aplicacao:
         self.canvas_surface = pygame.Surface((LARGURA_CANVAS, ALTURA_CANVAS))
         self.ui_manager = pygame_gui.UIManager((LARGURA_TOTAL, ALTURA_TOTAL))
         
-        # ### NOVO ### - Lista para guardar todos os pixels que devem ser desenhados
         self.pixels_a_desenhar = []
         
         self.construir_interface()
@@ -51,29 +50,38 @@ class Aplicacao:
         self.entrada_altura = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 90, 80), (100, 30)), manager=self.ui_manager, object_id='#altura_grid')
         self.botao_aplicar_res = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 120), (180, 40)), text='Aplicar Resolução', manager=self.ui_manager, object_id='#botao_aplicar_res')
 
-        # ### NOVO ### - Seção para o Algoritmo de Bresenham
-        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 180), (180, 20)), text='Algoritmo de Bresenham', manager=self.ui_manager)
-        
-        # Ponto 1
+        # --- Seção para o Algoritmo de Bresenham ---
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 180), (180, 20)), text='Bresenham (Linha)', manager=self.ui_manager)
         pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 210), (30, 20)), text='P1:', manager=self.ui_manager)
         self.entrada_p1_x = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 40, 210), (70, 30)), manager=self.ui_manager, object_id='#p1_x')
         self.entrada_p1_y = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 120, 210), (70, 30)), manager=self.ui_manager, object_id='#p1_y')
-        self.entrada_p1_x.set_text('10') # Valor inicial
-        self.entrada_p1_y.set_text('5') # Valor inicial
-
-        # Ponto 2
+        self.entrada_p1_x.set_text('10'); self.entrada_p1_y.set_text('5')
         pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 250), (30, 20)), text='P2:', manager=self.ui_manager)
         self.entrada_p2_x = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 40, 250), (70, 30)), manager=self.ui_manager, object_id='#p2_x')
         self.entrada_p2_y = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 120, 250), (70, 30)), manager=self.ui_manager, object_id='#p2_y')
-        self.entrada_p2_x.set_text('70') # Valor inicial
-        self.entrada_p2_y.set_text('45') # Valor inicial
-
-        # Botão para desenhar
+        self.entrada_p2_x.set_text('70'); self.entrada_p2_y.set_text('45')
         self.botao_bresenham = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 290), (180, 40)), text='Desenhar Linha', manager=self.ui_manager, object_id='#botao_bresenham')
 
-        # ### NOVO ### - Botão para limpar a tela
-        self.botao_limpar = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 340), (180, 40)), text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
+        # --- Seção para o Algoritmo de Círculo ---
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 350), (180, 20)), text='Ponto Médio (Círculo)', manager=self.ui_manager)
+        
+        # Centro
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 380), (60, 20)), text='Centro:', manager=self.ui_manager)
+        self.entrada_centro_x = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 70, 380), (55, 30)), manager=self.ui_manager, object_id='#centro_x')
+        self.entrada_centro_y = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 135, 380), (55, 30)), manager=self.ui_manager, object_id='#centro_y')
+        self.entrada_centro_x.set_text('40') # Valor inicial
+        self.entrada_centro_y.set_text('30') # Valor inicial
 
+        # Raio
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 420), (60, 20)), text='Raio:', manager=self.ui_manager)
+        self.entrada_raio = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 70, 420), (120, 30)), manager=self.ui_manager, object_id='#raio')
+        self.entrada_raio.set_text('20') # Valor inicial
+
+        # Botão para desenhar
+        self.botao_circulo = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 460), (180, 40)), text='Desenhar Círculo', manager=self.ui_manager, object_id='#botao_circulo')
+        
+        # --- Botão para limpar a tela (movido para o final) ---
+        self.botao_limpar = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 520), (180, 40)), text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
 
     def atualizar_resolucao_grid(self, nova_largura, nova_altura):
         print(f"Atualizando resolução para {nova_largura}x{nova_altura}")
@@ -83,7 +91,6 @@ class Aplicacao:
         self.entrada_altura.set_text(str(self.altura_grid))
         if self.largura_grid > 0: self.tamanho_celula_x = LARGURA_CANVAS / self.largura_grid
         if self.altura_grid > 0: self.tamanho_celula_y = ALTURA_CANVAS / self.altura_grid
-        # ### NOVO ### - Limpa a tela ao mudar a resolução
         self.pixels_a_desenhar.clear()
 
     def desenhar_grade(self):
@@ -113,47 +120,46 @@ class Aplicacao:
                 if evento.type == pygame.QUIT:
                     self.rodando = False
                 
-                # ### MODIFICADO ### - Processa eventos da interface para os novos botões
                 if evento.type == pygame_gui.UI_BUTTON_PRESSED:
+                    # Botão Aplicar Resolução
                     if evento.ui_element == self.botao_aplicar_res:
                         try:
                             self.atualizar_resolucao_grid(int(self.entrada_largura.get_text()), int(self.entrada_altura.get_text()))
                         except ValueError:
                             print("Erro: A resolução deve ser um número inteiro.")
                     
-                    # ### NOVO ### - Lógica do botão de desenhar Bresenham
+                    # Botão Bresenham
                     elif evento.ui_element == self.botao_bresenham:
                         try:
-                            p1_x = int(self.entrada_p1_x.get_text())
-                            p1_y = int(self.entrada_p1_y.get_text())
-                            p2_x = int(self.entrada_p2_x.get_text())
-                            p2_y = int(self.entrada_p2_y.get_text())
-                            
-                            # Chama o algoritmo e guarda os pixels
-                            linha_pixels = calcular_linha_bresenham((p1_x, p1_y), (p2_x, p2_y))
-                            self.pixels_a_desenhar.extend(linha_pixels) # Adiciona a nova linha sem apagar as antigas
+                            p1 = (int(self.entrada_p1_x.get_text()), int(self.entrada_p1_y.get_text()))
+                            p2 = (int(self.entrada_p2_x.get_text()), int(self.entrada_p2_y.get_text()))
+                            self.pixels_a_desenhar.extend(calcular_linha_bresenham(p1, p2))
                         except ValueError:
-                            print("Erro: As coordenadas dos pontos devem ser números inteiros.")
+                            print("Erro: As coordenadas da linha devem ser números inteiros.")
+
+                    # Lógica do botão de desenhar Círculo
+                    elif evento.ui_element == self.botao_circulo:
+                        try:
+                            centro = (int(self.entrada_centro_x.get_text()), int(self.entrada_centro_y.get_text()))
+                            raio = int(self.entrada_raio.get_text())
+                            self.pixels_a_desenhar.extend(calcular_circulo(centro, raio))
+                        except ValueError:
+                             print("Erro: As coordenadas do centro e o raio devem ser números inteiros.")
                             
-                    # ### NOVO ### - Lógica do botão de limpar
+                    # Botão Limpar
                     elif evento.ui_element == self.botao_limpar:
                         self.pixels_a_desenhar.clear()
 
                 self.ui_manager.process_events(evento)
             
             self.ui_manager.update(delta_time)
-
-            # --- Lógica de Desenho ---
             self.canvas_surface.fill(COR_FUNDO)
             self.desenhar_grade()
-            
-            # ### MODIFICADO ### - Desenha todos os pixels da lista
             if self.pixels_a_desenhar:
                 for pixel in self.pixels_a_desenhar:
                     self.desenhar_pixel(pixel[0], pixel[1])
-
             self.tela.blit(self.canvas_surface, (0, 0))
-            pygame.draw.rect(self.tela, COR_PAINEL, (LARGURA_CANVAS, 0, LARGURA_PAINEL, ALTURA_TOTAL))
+            pygame.draw.rect(self.tela, (60, 60, 60), (LARGURA_CANVAS, 0, LARGURA_PAINEL, ALTURA_TOTAL))
             self.ui_manager.draw_ui(self.tela)
             pygame.display.flip()
 

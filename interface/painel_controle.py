@@ -37,13 +37,37 @@ class PainelControle:
 
     def construir_interface(self):
         """Cria os elementos da GUI no painel de controle."""
-        # --- Seção de Resolução ---
+        # --- Seção de Histórico (Canto superior direito) ---
+        margem_direita = 10
+        posicao_x = self.largura_canvas + self.largura_painel - 180 - margem_direita
+        
+        # Título do histórico
+        pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((posicao_x, 10), (180, 20)),
+            text='Histórico de Desenhos',
+            manager=self.ui_manager
+        )
+
+        # Área de texto para o histórico
+        self.historico_texto = pygame_gui.elements.UITextBox(
+            html_text="Nenhum desenho realizado",
+            relative_rect=pygame.Rect((posicao_x, 40), (180, 150)),
+            manager=self.ui_manager
+        )
+
+        # --- Seção de Resolução (Canto superior esquerdo) ---
         pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((self.largura_canvas + 10, 10), (180, 20)),
             text='Configuração da Grade',
             manager=self.ui_manager
         )
         
+        pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, 40), (80, 20)),
+            text='Largura:',
+            manager=self.ui_manager
+        )
+
         self.entrada_largura = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((self.largura_canvas + 90, 40), (100, 30)),
             manager=self.ui_manager,
@@ -228,12 +252,57 @@ class PainelControle:
             manager=self.ui_manager,
             object_id='#botao_elipse')
 
-        # --- Botão para limpar a tela ---
+        # Botão para desfazer último desenho
+        self.botao_desfazer = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, self.altura_total - 90), (180, 35)),
+            text='Desfazer',
+            manager=self.ui_manager,
+            object_id='#botao_desfazer'
+        )
+
+        # Botão para limpar a tela
         self.botao_limpar = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, self.altura_total - 50), (180, 40)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, self.altura_total - 50), (180, 35)),
             text='Limpar Tela',
             manager=self.ui_manager,
-            object_id='#botao_limpar')
+            object_id='#botao_limpar'
+        )
             
         # Inicializa mostrando apenas os elementos da linha (opção padrão)
         self.mostrar_elementos_figura('Linha (Bresenham)')
+        
+    def atualizar_historico(self, historico):
+        """Atualiza o texto do histórico com os desenhos realizados."""
+        if not historico:
+            self.historico_texto.html_text = "Nenhum desenho realizado"
+            self.historico_texto.rebuild()
+            return
+        
+        texto_historico = "<body>"
+        for i, desenho in enumerate(historico, 1):
+            texto_historico += f"<b>{i}. {desenho.tipo}</b><br>"
+            # Formata os parâmetros de forma mais legível
+            if desenho.tipo == "Linha (Bresenham)":
+                p1 = desenho.parametros['p1']
+                p2 = desenho.parametros['p2']
+                texto_historico += f"P1: ({p1[0]}, {p1[1]})<br>"
+                texto_historico += f"P2: ({p2[0]}, {p2[1]})<br>"
+            elif desenho.tipo == "Círculo":
+                centro = desenho.parametros['centro']
+                raio = desenho.parametros['raio']
+                texto_historico += f"Centro: ({centro[0]}, {centro[1]})<br>"
+                texto_historico += f"Raio: {raio}<br>"
+            elif desenho.tipo == "Curva de Bézier":
+                for i, p in enumerate(['p0', 'p1', 'p2', 'p3']):
+                    ponto = desenho.parametros[p]
+                    texto_historico += f"P{i}: ({ponto[0]}, {ponto[1]})<br>"
+            elif desenho.tipo == "Elipse":
+                centro = desenho.parametros['centro']
+                texto_historico += f"Centro: ({centro[0]}, {centro[1]})<br>"
+                texto_historico += f"RX: {desenho.parametros['rx']}, RY: {desenho.parametros['ry']}<br>"
+            
+            texto_historico += f"<small>Hora: {desenho.timestamp.strftime('%H:%M:%S')}</small><br><br>"
+        
+        texto_historico += "</body>"
+        self.historico_texto.html_text = texto_historico
+        self.historico_texto.rebuild()

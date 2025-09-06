@@ -1,4 +1,5 @@
 import pygame
+from utils.historico import Historico
 
 COR_FUNDO = (20, 20, 20)
 COR_GRADE = (40, 40, 40)
@@ -10,6 +11,7 @@ class AreaDesenho:
         self.altura = altura
         self.surface = pygame.Surface((largura, altura))
         self.pixels_a_desenhar = []
+        self.historico = Historico()
         self.atualizar_resolucao_grid(largura_grid, altura_grid)
 
     def atualizar_resolucao_grid(self, nova_largura, nova_altura):
@@ -40,11 +42,24 @@ class AreaDesenho:
         retangulo_pixel = pygame.Rect(x_tela, y_tela, self.tamanho_celula_x, self.tamanho_celula_y)
         pygame.draw.rect(self.surface, cor, retangulo_pixel)
 
-    def adicionar_pixels(self, pixels):
+    def adicionar_pixels(self, pixels, tipo_desenho=None, parametros=None):
+        """Adiciona pixels ao desenho e registra no histórico."""
         self.pixels_a_desenhar.extend(pixels)
+        if tipo_desenho:  # Se foi especificado um tipo, registra no histórico
+            self.historico.adicionar_desenho(tipo_desenho, parametros or {}, pixels)
 
     def limpar_pixels(self):
+        """Limpa todos os pixels e o histórico."""
         self.pixels_a_desenhar.clear()
+        self.historico.limpar_historico()
+
+    def desfazer_ultimo_desenho(self):
+        """Desfaz o último desenho feito."""
+        self.pixels_a_desenhar = self.historico.desfazer_ultimo_desenho()
+
+    def obter_historico(self):
+        """Retorna o histórico de desenhos."""
+        return self.historico.obter_desenhos()
 
     def desenhar(self, tela):
         self.surface.fill(COR_FUNDO)

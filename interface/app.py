@@ -3,6 +3,7 @@ import pygame
 import pygame_gui
 from algoritmos.bresenham import calcular_linha_bresenham
 from algoritmos.circulo_elipse import calcular_circulo
+from algoritmos.curvas_bezier import rasterizar_curva_bezier
 
 # --- Constantes de Cores ---
 COR_FUNDO = (20, 20, 20)
@@ -11,9 +12,9 @@ COR_PAINEL = (60, 60, 60)
 COR_PIXEL = (255, 255, 255)
 
 # --- Constantes de Layout ---
-LARGURA_TOTAL = 800
-ALTURA_TOTAL = 600
-LARGURA_PAINEL = 200
+LARGURA_TOTAL = 1200
+ALTURA_TOTAL = 800
+LARGURA_PAINEL = 400
 LARGURA_CANVAS = LARGURA_TOTAL - LARGURA_PAINEL
 ALTURA_CANVAS = ALTURA_TOTAL
 
@@ -80,8 +81,36 @@ class Aplicacao:
         # Botão para desenhar
         self.botao_circulo = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 460), (180, 40)), text='Desenhar Círculo', manager=self.ui_manager, object_id='#botao_circulo')
         
+        # --- Seção para Curvas de Bézier ---
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 520), (200, 20)), text='Curva de Bézier (Cúbica)', manager=self.ui_manager)
+        # P0
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 550), (30, 20)), text='P0:', manager=self.ui_manager)
+        self.entrada_b_p0_x = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 40, 550), (70, 30)), manager=self.ui_manager)
+        self.entrada_b_p0_y = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 120, 550), (70, 30)), manager=self.ui_manager)
+        self.entrada_b_p0_x.set_text('10')
+        self.entrada_b_p0_y.set_text('60')
+        # P1
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 590), (30, 20)), text='P1:', manager=self.ui_manager)
+        self.entrada_b_p1_x = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 40, 590), (70, 30)), manager=self.ui_manager)
+        self.entrada_b_p1_y = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 120, 590), (70, 30)), manager=self.ui_manager)
+        self.entrada_b_p1_x.set_text('25')
+        self.entrada_b_p1_y.set_text('10')
+        # P2
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 630), (30, 20)), text='P2:', manager=self.ui_manager)
+        self.entrada_b_p2_x = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 40, 630), (70, 30)), manager=self.ui_manager)
+        self.entrada_b_p2_y = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 120, 630), (70, 30)), manager=self.ui_manager)
+        self.entrada_b_p2_x.set_text('55')
+        self.entrada_b_p2_y.set_text('90')
+        # P3
+        pygame_gui.elements.UILabel(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 670), (30, 20)), text='P3:', manager=self.ui_manager)
+        self.entrada_b_p3_x = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 40, 670), (70, 30)), manager=self.ui_manager)
+        self.entrada_b_p3_y = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((LARGURA_CANVAS + 120, 670), (70, 30)), manager=self.ui_manager)
+        self.entrada_b_p3_x.set_text('70')
+        self.entrada_b_p3_y.set_text('50')
+        self.botao_bezier = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 710), (180, 40)), text='Desenhar Curva', manager=self.ui_manager, object_id='#botao_bezier')
+
         # --- Botão para limpar a tela (movido para o final) ---
-        self.botao_limpar = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 520), (180, 40)), text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
+        self.botao_limpar = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((LARGURA_CANVAS + 10, 760), (180, 40)), text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
 
     def atualizar_resolucao_grid(self, nova_largura, nova_altura):
         print(f"Atualizando resolução para {nova_largura}x{nova_altura}")
@@ -145,6 +174,17 @@ class Aplicacao:
                             self.pixels_a_desenhar.extend(calcular_circulo(centro, raio))
                         except ValueError:
                              print("Erro: As coordenadas do centro e o raio devem ser números inteiros.")
+
+                    # Lógica do botão de desenhar Curva de Bézier
+                    elif evento.ui_element == self.botao_bezier:
+                        try:
+                            p0 = (int(self.entrada_b_p0_x.get_text()), int(self.entrada_b_p0_y.get_text()))
+                            p1 = (int(self.entrada_b_p1_x.get_text()), int(self.entrada_b_p1_y.get_text()))
+                            p2 = (int(self.entrada_b_p2_x.get_text()), int(self.entrada_b_p2_y.get_text()))
+                            p3 = (int(self.entrada_b_p3_x.get_text()), int(self.entrada_b_p3_y.get_text()))
+                            self.pixels_a_desenhar.extend(rasterizar_curva_bezier(p0, p1, p2, p3))
+                        except ValueError:
+                            print("Erro: As coordenadas dos pontos de controle devem ser números inteiros.")
                             
                     # Botão Limpar
                     elif evento.ui_element == self.botao_limpar:

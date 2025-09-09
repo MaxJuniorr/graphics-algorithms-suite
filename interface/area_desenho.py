@@ -61,6 +61,10 @@ class AreaDesenho:
         """Retorna o histórico de desenhos."""
         return self.historico.obter_desenhos()
 
+    def remover_desenho_indice(self, indice: int):
+        """Remove um desenho específico pelo índice no histórico (0 = mais antigo)."""
+        self.pixels_a_desenhar = self.historico.remover_por_indice(indice)
+
     def desenhar(self, tela):
         self.surface.fill(COR_FUNDO)
         self.desenhar_grade()

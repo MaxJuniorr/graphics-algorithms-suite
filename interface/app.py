@@ -150,3 +150,13 @@ class Aplicacao:
                         
         elif evento.ui_element == painel.botao_limpar:
             self.area_desenho.limpar_pixels()
+        else:
+            # Verifica se é um botão de exclusão do histórico
+            if hasattr(painel, '_historico_itens'):
+                for item in painel._historico_itens:
+                    for w in item.get('widgets', []):
+                        if isinstance(w, pygame_gui.elements.UIButton) and evento.ui_element == w:
+                            indice_real = getattr(w, 'indice_historico_real', None)
+                            if indice_real is not None:
+                                self.area_desenho.remover_desenho_indice(indice_real)
+                            return

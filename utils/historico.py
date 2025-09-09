@@ -40,3 +40,13 @@ class Historico:
         for desenho in self.desenhos:
             pixels.extend(desenho.pixels)
         return pixels
+
+    def remover_por_indice(self, indice: int) -> List[Tuple[int, int]]:
+        """Remove o desenho pelo índice (0 = mais antigo) e retorna todos os pixels restantes."""
+        if 0 <= indice < len(self.desenhos):
+            self.desenhos.pop(indice)
+        # Reconstroi lista de pixels restantes
+        pixels = []
+        for desenho in self.desenhos:
+            pixels.extend(desenho.pixels)
+        return pixels

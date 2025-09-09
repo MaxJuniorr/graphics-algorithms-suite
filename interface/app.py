@@ -20,7 +20,13 @@ class Aplicacao:
 
         self.tela = pygame.display.set_mode((LARGURA_TOTAL, ALTURA_TOTAL))
         pygame.display.set_caption("Trabalho de Computação Gráfica")
+        
         self.ui_manager = pygame_gui.UIManager((LARGURA_TOTAL, ALTURA_TOTAL))
+        # Preload de fontes usadas em tags <b> e <i> do histórico para evitar avisos
+        self.ui_manager.preload_fonts([
+            {'name': 'noto_sans', 'point_size': 14, 'style': 'bold', 'antialiased': True},
+            {'name': 'noto_sans', 'point_size': 14, 'style': 'italic', 'antialiased': True},
+        ])
         
         self.area_desenho = AreaDesenho(LARGURA_CANVAS, ALTURA_CANVAS, largura_grid_inicial, altura_grid_inicial)
         self.painel_controle = PainelControle(self.ui_manager, LARGURA_PAINEL, ALTURA_TOTAL, LARGURA_CANVAS)
@@ -50,12 +56,15 @@ class Aplicacao:
                 if evento.type == pygame.QUIT:
                     self.rodando = False
                 
+                # Processar eventos do pygame_gui
+                self.ui_manager.process_events(evento)
+                
+                # Processar eventos específicos da aplicação
                 if evento.type == pygame_gui.UI_BUTTON_PRESSED:
                     self.manipular_eventos_ui(evento)
                 elif evento.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     if evento.ui_element == self.painel_controle.seletor_figura:
                         self.painel_controle.mostrar_elementos_figura(evento.text)
-                self.ui_manager.process_events(evento)
                 
             # Atualiza o histórico a cada frame
             self.painel_controle.atualizar_historico(self.area_desenho.obter_historico())

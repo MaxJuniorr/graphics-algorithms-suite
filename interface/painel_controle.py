@@ -7,14 +7,18 @@ class PainelControle:
         self.largura_painel = largura_painel
         self.altura_total = altura_total
         self.largura_canvas = largura_canvas
-        
+
         # Dicionários para armazenar elementos de cada tipo de figura
         self.elementos_linha = {}
         self.elementos_circulo = {}
         self.elementos_bezier = {}
         self.elementos_elipse = {}
-        
+
+        # Construção da interface e inicialização de cache
         self.construir_interface()
+        # Cache para evitar rebuild constante do histórico
+        self._historico_cache_str = None
+        self._historico_cache_len = 0
         
     def mostrar_elementos_figura(self, figura_selecionada):
         """Mostra os elementos da figura selecionada e esconde os outros."""
@@ -273,39 +277,36 @@ class PainelControle:
         
     def atualizar_historico(self, historico):
         """Atualiza o texto do histórico com os desenhos realizados."""
+        # Atualiza somente se houve mudança (quantidade ou conteúdo)
         if not historico:
-            self.historico_texto.html_text = "Nenhum desenho realizado"
-            self.historico_texto.rebuild()
-            return
-        
-        texto_historico = "<body>"
-        for i, desenho in enumerate(reversed(historico), 1):  # Inverte a ordem para mostrar mais recentes primeiro
-            texto_historico += f"<b>{i}. {desenho.tipo}</b><br>"
-            
-            # Formata os parâmetros de forma mais legível
-            if desenho.tipo == "Linha (Bresenham)":
-                p1 = desenho.parametros['p1']
-                p2 = desenho.parametros['p2']
-                texto_historico += f"    P1: ({p1[0]}, {p1[1]})<br>"
-                texto_historico += f"    P2: ({p2[0]}, {p2[1]})<br>"
-            elif desenho.tipo == "Círculo":
-                centro = desenho.parametros['centro']
-                raio = desenho.parametros['raio']
-                texto_historico += f"    Centro: ({centro[0]}, {centro[1]})<br>"
-                texto_historico += f"    Raio: {raio}<br>"
-            elif desenho.tipo == "Curva de Bézier":
-                for i, p in enumerate(['p0', 'p1', 'p2', 'p3']):
-                    ponto = desenho.parametros[p]
-                    texto_historico += f"    P{i}: ({ponto[0]}, {ponto[1]})<br>"
-            elif desenho.tipo == "Elipse":
-                centro = desenho.parametros['centro']
-                texto_historico += f"    Centro: ({centro[0]}, {centro[1]})<br>"
-                texto_historico += f"    RX: {desenho.parametros['rx']}, RY: {desenho.parametros['ry']}<br>"
-            
-            texto_historico += f"<i>Hora: {desenho.timestamp.strftime('%H:%M:%S')}</i><br><br>"
-        
-        texto_historico += "</body>"
-        self.historico_texto.html_text = texto_historico
-        self.historico_texto.rebuild()
-        self.historico_texto.html_text = texto_historico
+            novo_conteudo = "Nenhum desenho realizado"
+        else:
+            partes = []
+            for i, desenho in enumerate(reversed(historico), 1):
+                partes.append(f"<b>{i}. {desenho.tipo}</b><br>")
+                if desenho.tipo == "Linha (Bresenham)":
+                    p1 = desenho.parametros['p1']; p2 = desenho.parametros['p2']
+                    partes.append(f"&nbsp;&nbsp;P1: ({p1[0]}, {p1[1]})<br>")
+                    partes.append(f"&nbsp;&nbsp;P2: ({p2[0]}, {p2[1]})<br>")
+                elif desenho.tipo == "Círculo":
+                    centro = desenho.parametros['centro']; raio = desenho.parametros['raio']
+                    partes.append(f"&nbsp;&nbsp;Centro: ({centro[0]}, {centro[1]})<br>")
+                    partes.append(f"&nbsp;&nbsp;Raio: {raio}<br>")
+                elif desenho.tipo == "Curva de Bézier":
+                    for j, p in enumerate(['p0', 'p1', 'p2', 'p3']):
+                        ponto = desenho.parametros[p]
+                        partes.append(f"&nbsp;&nbsp;P{j}: ({ponto[0]}, {ponto[1]})<br>")
+                elif desenho.tipo == "Elipse":
+                    centro = desenho.parametros['centro']
+                    partes.append(f"&nbsp;&nbsp;Centro: ({centro[0]}, {centro[1]})<br>")
+                    partes.append(f"&nbsp;&nbsp;RX: {desenho.parametros['rx']}, RY: {desenho.parametros['ry']}<br>")
+                partes.append(f"<i>Hora: {desenho.timestamp.strftime('%H:%M:%S')}</i><br><br>")
+            novo_conteudo = ''.join(partes)
+
+        if novo_conteudo == self._historico_cache_str:
+            return  # Nada mudou, preserva scroll
+
+        self._historico_cache_str = novo_conteudo
+        self._historico_cache_len = len(historico)
+        self.historico_texto.html_text = novo_conteudo
         self.historico_texto.rebuild()

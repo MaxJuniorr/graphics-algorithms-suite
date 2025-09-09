@@ -1,0 +1,72 @@
+{
+    "preload_fonts": [
+        {
+            "name": "noto_sans",
+            "point_size": 12,
+            "style": "regular",
+            "antialiased": "1"
+        },
+        {
+            "name": "noto_sans",
+            "point_size": 12,
+            "style": "bold",
+            "antialiased": "1"
+        },
+        {
+            "name": "noto_sans",
+            "point_size": 12,
+            "style": "italic",
+            "antialiased": "1"
+        },
+        {
+            "name": "noto_sans",
+            "point_size": 14,
+            "style": "regular",
+            "antialiased": "1"
+        },
+        {
+            "name": "noto_sans",
+            "point_size": 14,
+            "style": "bold",
+            "antialiased": "1"
+        },
+        {
+            "name": "noto_sans",
+            "point_size": 14,
+            "style": "italic",
+            "antialiased": "1"
+        }
+    ],
+    "defaults": {
+        "font": {
+            "name": "noto_sans",
+            "size": "14",
+            "bold": "0",
+            "italic": "0"
+        }
+    },
+    "text_box": {
+        "font": {
+            "name": "noto_sans",
+            "size": "12",
+            "bold": "0",
+            "italic": "0"
+        }
+    },
+    "button": {
+        "font": {
+            "name": "noto_sans",
+            "size": "14",
+            "bold": "1",
+            "italic": "0"
+        }
+    },
+    "label": {
+        "font": {
+            "name": "noto_sans",
+            "size": "14",
+            "bold": "0",
+            "italic": "0"
+        }
+    }
+}

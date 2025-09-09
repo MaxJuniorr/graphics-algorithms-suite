@@ -6,3 +6,4 @@ if __name__ == "__main__":
     # Define a resolução inicial da grade
     app = Aplicacao(largura_grid_inicial=80, altura_grid_inicial=80)
     app.executar()
+

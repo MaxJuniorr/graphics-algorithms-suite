@@ -55,7 +55,7 @@ class PainelControle:
         # Área de texto para o histórico com barra de rolagem
         self.historico_texto = pygame_gui.elements.UITextBox(
             html_text="Nenhum desenho realizado",
-            relative_rect=pygame.Rect((self.posicao_x_historico, 40), (180, 150)),
+            relative_rect=pygame.Rect((self.posicao_x_historico, 40), (180, 400)),
             manager=self.ui_manager
         )
 
@@ -217,41 +217,42 @@ class PainelControle:
             object_id='#botao_bezier')
 
         # --- Elementos para Elipse ---
+        # Layout reorganizado: duas linhas (Centro) e (Raios), cada uma com X/Y alinhados
+        # Linha 1 - Centro
         self.elementos_elipse['label_centro'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (60, 20)),
-            text='Centro:', manager=self.ui_manager)
-            
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (180, 20)),
+            text='Centro (x, y):', manager=self.ui_manager)
+
         self.elementos_elipse['centro_x'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((self.largura_canvas + 70, base_y), (55, 30)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 25), (80, 30)),
             manager=self.ui_manager)
-            
+
         self.elementos_elipse['centro_y'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((self.largura_canvas + 135, base_y), (55, 30)),
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 25), (80, 30)),
             manager=self.ui_manager)
-            
+
+        # Linha 2 - Raios
         self.elementos_elipse['label_rx'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 40), (35, 20)),
-            text='RX:', manager=self.ui_manager)
-            
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 60), (180, 20)),
+            text='Raios (rx, ry):', manager=self.ui_manager)
+
         self.elementos_elipse['rx'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((self.largura_canvas + 45, base_y + 40), (60, 30)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 85), (80, 30)),
             manager=self.ui_manager)
-            
-        self.elementos_elipse['label_ry'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((self.largura_canvas + 115, base_y + 40), (35, 20)),
-            text='RY:', manager=self.ui_manager)
-            
+
         self.elementos_elipse['ry'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 40), (60, 30)),
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 85), (80, 30)),
             manager=self.ui_manager)
-            
+
+        # Valores iniciais
         self.elementos_elipse['centro_x'].set_text('40')
         self.elementos_elipse['centro_y'].set_text('40')
         self.elementos_elipse['rx'].set_text('30')
         self.elementos_elipse['ry'].set_text('20')
-        
+
+        # Botão vem depois das duas linhas
         self.elementos_elipse['botao'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (180, 40)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 125), (180, 40)),
             text='Desenhar Elipse',
             manager=self.ui_manager,
             object_id='#botao_elipse')

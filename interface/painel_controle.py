@@ -111,7 +111,7 @@ class PainelControle:
         self.elementos_linha['p2_y'] = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((self.largura_canvas + 120, base_y + 40), (70, 30)),
             manager=self.ui_manager, object_id='#p2_y')
-        for k,v in [('p1_x','10'),('p1_y','5'),('p2_x','70'),('p2_y','45')]:
+        for k,v in [('p1_x','-30'),('p1_y','-30'),('p2_x','30'),('p2_y','30')]:
             self.elementos_linha[k].set_text(v)
         self.elementos_linha['botao'] = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (180, 40)),
@@ -133,16 +133,16 @@ class PainelControle:
         self.elementos_circulo['raio'] = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((self.largura_canvas + 70, base_y + 40), (120, 30)),
             manager=self.ui_manager, object_id='#raio')
-        self.elementos_circulo['centro_x'].set_text('40')
-        self.elementos_circulo['centro_y'].set_text('30')
-        self.elementos_circulo['raio'].set_text('20')
+        self.elementos_circulo['centro_x'].set_text('0')
+        self.elementos_circulo['centro_y'].set_text('0')
+        self.elementos_circulo['raio'].set_text('25')
         self.elementos_circulo['botao'] = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (180, 40)),
             text='Desenhar Círculo', manager=self.ui_manager, object_id='#botao_circulo')
 
         # Bezier
         pontos_bezier = ['P0','P1','P2','P3']
-        coords_ini = [('10','60'),('25','10'),('55','90'),('70','50')]
+        coords_ini = [('-30','-10'),('-10','30'),('10','-30'),('30','10')]
         for i,(p,coords) in enumerate(zip(pontos_bezier,coords_ini)):
             y_off = base_y + i*40
             self.elementos_bezier[f'label_{p.lower()}'] = pygame_gui.elements.UILabel(
@@ -173,8 +173,8 @@ class PainelControle:
             relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 85), (80,30)), manager=self.ui_manager)
         self.elementos_elipse['ry'] = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 85), (80,30)), manager=self.ui_manager)
-        self.elementos_elipse['centro_x'].set_text('40')
-        self.elementos_elipse['centro_y'].set_text('40')
+        self.elementos_elipse['centro_x'].set_text('0')
+        self.elementos_elipse['centro_y'].set_text('0')
         self.elementos_elipse['rx'].set_text('30')
         self.elementos_elipse['ry'].set_text('20')
         self.elementos_elipse['botao'] = pygame_gui.elements.UIButton(

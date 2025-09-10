@@ -3,6 +3,7 @@ from utils.historico import Historico
 
 COR_FUNDO = (20, 20, 20)
 COR_GRADE = (40, 40, 40)
+COR_EIXO = (80, 80, 80)
 COR_PIXEL = (255, 255, 255)
 COR_SELECIONADO = (255, 255, 0)  # Amarelo para destaque
 
@@ -25,20 +26,35 @@ class AreaDesenho:
         self.limpar_pixels()
 
     def desenhar_grade(self):
-        for x in range(0, self.largura_grid + 1):
-            pos_x = x * self.tamanho_celula_x
-            pygame.draw.line(self.surface, COR_GRADE, (pos_x, 0), (pos_x, self.altura))
-        for y in range(0, self.altura_grid + 1):
-            pos_y = y * self.tamanho_celula_y
-            pygame.draw.line(self.surface, COR_GRADE, (0, pos_y), (self.largura, pos_y))
+        centro_x, centro_y = self.largura / 2, self.altura / 2
+        
+        # Limites da grade em coordenadas de grade
+        meia_largura_grid = self.largura_grid // 2
+        meia_altura_grid = self.altura_grid // 2
+
+        # Linhas verticais
+        for x_grid in range(-meia_largura_grid, meia_largura_grid + 1):
+            pos_x = centro_x + x_grid * self.tamanho_celula_x
+            cor = COR_EIXO if x_grid == 0 else COR_GRADE
+            pygame.draw.line(self.surface, cor, (pos_x, 0), (pos_x, self.altura))
+
+        # Linhas horizontais
+        for y_grid in range(-meia_altura_grid, meia_altura_grid + 1):
+            pos_y = centro_y - y_grid * self.tamanho_celula_y
+            cor = COR_EIXO if y_grid == 0 else COR_GRADE
+            pygame.draw.line(self.surface, cor, (0, pos_y), (self.largura, pos_y))
 
     def desenhar_pixel(self, x_grid, y_grid, cor=COR_PIXEL):
         if self.tamanho_celula_x <= 0 or self.tamanho_celula_y <= 0: return
-        if not (0 <= x_grid < self.largura_grid and 0 <= y_grid < self.altura_grid):
-            return
+
+        # Converte coordenadas da grade (centro (0,0)) para coordenadas da tela (canto sup. esq. (0,0))
+        centro_x_tela, centro_y_tela = self.largura / 2, self.altura / 2
         
-        x_tela = x_grid * self.tamanho_celula_x
-        y_tela = y_grid * self.tamanho_celula_y
+        # Calcula a posição do canto superior esquerdo da célula da grade na tela
+        x_tela = centro_x_tela + x_grid * self.tamanho_celula_x
+        y_tela = centro_y_tela - (y_grid + 1) * self.tamanho_celula_y
+
+        # Pygame lida com o clipping de retângulos fora da superfície, então a verificação de limites não é necessária aqui.
         retangulo_pixel = pygame.Rect(x_tela, y_tela, self.tamanho_celula_x, self.tamanho_celula_y)
         pygame.draw.rect(self.surface, cor, retangulo_pixel)
 

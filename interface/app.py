@@ -7,6 +7,7 @@ from algoritmos.bresenham import calcular_linha_bresenham
 from algoritmos.circulo_elipse import calcular_circulo, calcular_elipse
 from algoritmos.curvas_bezier import rasterizar_curva_bezier
 from algoritmos.polilinha import rasterizar_polilinha
+from algoritmos.preenchimento import preencher_scanline
 import algoritmos.transformacoes as transform
 
 # --- Constantes de Layout ---
@@ -67,7 +68,9 @@ class Aplicacao:
             pontos = [desenho.parametros['p1'], desenho.parametros['p2']]
         elif desenho.tipo == "Curva de Bézier":
             pontos = [desenho.parametros[f'p{i}'] for i in range(4)]
-        elif desenho.tipo in ["Polilinha", "Pontos"]:
+        elif desenho.tipo == "Polilinha":
+            pontos = desenho.parametros.get('pontos', [])
+        elif desenho.tipo == "Pontos":
             pontos = desenho.parametros.get('pontos', [])
         else:
             # Para outros tipos como Círculo/Elipse, não há vértices a priori
@@ -81,7 +84,9 @@ class Aplicacao:
         elif desenho.tipo == "Curva de Bézier":
             for i, ponto in enumerate(novos_pontos):
                 desenho.parametros[f'p{i}'] = ponto
-        elif desenho.tipo in ["Polilinha", "Pontos"]:
+        elif desenho.tipo == "Polilinha":
+            desenho.parametros['pontos'] = novos_pontos
+        elif desenho.tipo == "Pontos":
             desenho.parametros['pontos'] = novos_pontos
 
     def _converter_para_polilinha(self, desenho):
@@ -123,6 +128,9 @@ class Aplicacao:
         elif tipo_figura == 'bezier':
             self.painel_controle.elementos_bezier[f'{ponto}_x'].set_text(x_str)
             self.painel_controle.elementos_bezier[f'{ponto}_y'].set_text(y_str)
+        elif tipo_figura == 'triangulo':
+            self.painel_controle.elementos_triangulo[f'{ponto}_x'].set_text(x_str)
+            self.painel_controle.elementos_triangulo[f'{ponto}_y'].set_text(y_str)
 
     def manipular_selecao_historico(self, evento):
         item_selecionado = evento.text
@@ -164,6 +172,15 @@ class Aplicacao:
                 rx, ry = int(painel.elementos_elipse['rx'].get_text()), int(painel.elementos_elipse['ry'].get_text())
                 self.area_desenho.adicionar_forma("Elipse", {'centro': centro, 'rx': rx, 'ry': ry})
             except ValueError: print("Erro: As coordenadas do centro e os raios devem ser números inteiros.")
+        elif evento.ui_element == painel.elementos_triangulo.get('botao'):
+            try:
+                p1 = (int(painel.elementos_triangulo['p1_x'].get_text()), int(painel.elementos_triangulo['p1_y'].get_text()))
+                p2 = (int(painel.elementos_triangulo['p2_x'].get_text()), int(painel.elementos_triangulo['p2_y'].get_text()))
+                p3 = (int(painel.elementos_triangulo['p3_x'].get_text()), int(painel.elementos_triangulo['p3_y'].get_text()))
+                pts = [p1, p2, p3, p1]
+                self.area_desenho.adicionar_forma("Polilinha", { 'pontos': pts })
+            except ValueError:
+                print("Erro: As coordenadas do triângulo devem ser números inteiros.")
         elif evento.ui_element == painel.elementos_polilinha.get('botao'):
             try:
                 pontos_str = [p.strip() for p in painel.elementos_polilinha['entrada_pontos'].get_text().split(';')]
@@ -183,6 +200,9 @@ class Aplicacao:
                 if desenho.tipo in ["Círculo", "Elipse"]:
                     cx, cy = desenho.parametros['centro']
                     desenho.parametros['centro'] = (cx + tx, cy + ty)
+                elif desenho.tipo == "Pontos":
+                    novos = transform.transladar(desenho.parametros.get('pontos', []), tx, ty)
+                    desenho.parametros['pontos'] = novos
                 else:
                     desenho_v, pontos = self._obter_vertices_selecionados()
                     if not desenho_v: return
@@ -220,6 +240,9 @@ class Aplicacao:
                     desenho.parametros['centro'] = (round(novo_centro_x), round(novo_centro_y))
                     desenho.parametros['rx'] = round(desenho.parametros['rx'] * sx)
                     desenho.parametros['ry'] = round(desenho.parametros['ry'] * sy)
+                elif desenho.tipo == "Pontos":
+                    novos = transform.escalar(desenho.parametros.get('pontos', []), sx, sy, ponto_fixo)
+                    desenho.parametros['pontos'] = novos
                 else:
                     pontos = []
                     if desenho.tipo in ["Círculo", "Elipse"]:
@@ -235,26 +258,54 @@ class Aplicacao:
             indice_selecionado = self.area_desenho.obter_indice_selecionado()
             if indice_selecionado is None: print("Nenhum objeto selecionado."); return
             desenho = self.area_desenho.obter_historico()[indice_selecionado]
-            
             try:
                 angulo = float(painel.elementos_transformacao['rot_angulo'].get_text())
-                pivo = (int(painel.elementos_transformacao['rot_px'].get_text()), int(painel.elementos_transformacao['rot_py'].get_text()))
-
-                if desenho.tipo in ["Círculo", "Elipse"]:
-                    print(f"Rotacionando objeto paramétrico '{desenho.tipo}' como nuvem de pontos.")
-                    pontos_rasterizados = self.area_desenho.rasterizar_desenho(desenho)
-                    novos_pontos = transform.rotacionar(pontos_rasterizados, angulo, pivo)
+                px = int(painel.elementos_transformacao['rot_px'].get_text())
+                py = int(painel.elementos_transformacao['rot_py'].get_text())
+                if desenho.tipo == "Círculo":
+                    # Rotaciona cada pixel rasterizado do círculo e passa a tratá-lo como 'Pontos'
+                    pixels = calcular_circulo(desenho.parametros['centro'], desenho.parametros['raio'])
+                    novos_pontos = transform.rotacionar(pixels, angulo, (px, py))
                     desenho.tipo = "Pontos"
-                    desenho.parametros = {'pontos': novos_pontos}
+                    desenho.parametros = { 'pontos': novos_pontos }
+                elif desenho.tipo == "Elipse":
+                    pixels = calcular_elipse(desenho.parametros['centro'], desenho.parametros['rx'], desenho.parametros['ry'])
+                    novos_pontos = transform.rotacionar(pixels, angulo, (px, py))
+                    desenho.tipo = "Pontos"
+                    desenho.parametros = { 'pontos': novos_pontos }
+                elif desenho.tipo == "Pontos":
+                    novos_pontos = transform.rotacionar(desenho.parametros.get('pontos', []), angulo, (px, py))
+                    desenho.parametros['pontos'] = novos_pontos
                 else:
-                    _, pontos_vertice = self._obter_vertices_selecionados()
-                    if not pontos_vertice: 
-                        print(f"Objeto '{desenho.tipo}' não tem vértices para rotacionar.")
-                        return
-                    novos_pontos = transform.rotacionar(pontos_vertice, angulo, pivo)
+                    _, pontos = self._obter_vertices_selecionados()
+                    if not pontos: return
+                    novos_pontos = transform.rotacionar(pontos, angulo, (px, py))
                     self._atualizar_vertices_desenho(desenho, novos_pontos)
-            except ValueError: 
-                print("Erro nos parâmetros de rotação. Verifique se são números válidos.")
+            except ValueError: print("Erro nos parâmetros de rotação.")
+
+        elif evento.ui_element == painel.elementos_transformacao.get('btn_preencher'):
+            # Preenche polígono via Scanline (requer Polilinha fechada)
+            indice_selecionado = self.area_desenho.obter_indice_selecionado()
+            if indice_selecionado is None:
+                print("Nenhum objeto selecionado.")
+                return
+            desenho = self.area_desenho.obter_historico()[indice_selecionado]
+            if desenho.tipo != "Polilinha":
+                print("Preenchimento disponível apenas para Polilinha.")
+                return
+            vertices = list(desenho.parametros.get('pontos', []))
+            if len(vertices) < 3:
+                print("A Polilinha deve ter ao menos 3 pontos.")
+                return
+            # Garante fechamento
+            if vertices[0] != vertices[-1]:
+                vertices.append(vertices[0])
+            pixels = preencher_scanline(vertices)
+            if not pixels:
+                print("Nada a preencher (verifique se o polígono é simples/fechado).")
+                return
+            # Adiciona como um novo objeto de pontos preenchidos
+            self.area_desenho.adicionar_forma("Pontos", { 'pontos': pixels })
 
         # --- Botões de Definição e Ações Gerais ---
         elif evento.ui_element in [painel.elementos_linha.get(k) for k in ['btn_p1', 'btn_p2']]:
@@ -264,6 +315,13 @@ class Aplicacao:
         elif evento.ui_element in [painel.elementos_bezier.get(f'btn_p{i}') for i in range(4)]:
             p_map = {painel.elementos_bezier.get(f'btn_p{i}'): f'p{i}' for i in range(4)}
             self.proximo_clique_define = ('bezier', p_map[evento.ui_element])
+        elif evento.ui_element in [painel.elementos_triangulo.get(k) for k in ['btn_p1','btn_p2','btn_p3']]:
+            btn_map = {
+                painel.elementos_triangulo.get('btn_p1'): 'p1',
+                painel.elementos_triangulo.get('btn_p2'): 'p2',
+                painel.elementos_triangulo.get('btn_p3'): 'p3',
+            }
+            self.proximo_clique_define = ('triangulo', btn_map[evento.ui_element])
         elif evento.ui_element == painel.botao_limpar: self.area_desenho.limpar_pixels()
         elif evento.ui_element == painel.botao_desfazer: self.area_desenho.desfazer_ultimo_desenho()
         elif evento.ui_element == painel.botao_excluir_selecao:

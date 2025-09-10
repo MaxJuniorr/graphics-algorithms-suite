@@ -1,6 +1,7 @@
 import pygame
 import pygame_gui
 
+
 class PainelControle:
     def __init__(self, ui_manager, largura_painel, altura_total, largura_canvas):
         self.ui_manager = ui_manager
@@ -14,10 +15,16 @@ class PainelControle:
         self.elementos_bezier = {}
         self.elementos_elipse = {}
         self.elementos_polilinha = {}
+        self.elementos_triangulo = {}
         self.elementos_transformacao = {}
-        
+
+        # Cache do histórico
         self._historico_cache_str = None
 
+        # Estado do triângulo regular
+        self.triangulo_sentido_horario = False
+
+        # Monta a interface e mostra os elementos padrão
         self.construir_interface()
         self.mostrar_elementos_figura('Linha (Bresenham)')
 
@@ -85,7 +92,7 @@ class PainelControle:
             manager=self.ui_manager
         )
         self.seletor_figura = pygame_gui.elements.UIDropDownMenu(
-            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha'],
+            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha', 'Triângulo'],
             starting_option='Linha (Bresenham)',
             relative_rect=pygame.Rect((self.largura_canvas + 10, 210), (180, 30)),
             manager=self.ui_manager
@@ -103,7 +110,8 @@ class PainelControle:
         self.elementos_linha['p2_y'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 40), (50, 30)), manager=self.ui_manager)
         self.elementos_linha['btn_p2'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 40), (40, 30)), text='Def', manager=self.ui_manager, object_id='#linha_set_p2')
 
-        for k,v in [('p1_x','-30'),('p1_y','-30'),('p2_x','30'),('p2_y','30')]: self.elementos_linha[k].set_text(v)
+        for k, v in [('p1_x', '-30'), ('p1_y', '-30'), ('p2_x', '30'), ('p2_y', '30')]:
+            self.elementos_linha[k].set_text(v)
         self.elementos_linha['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (180, 40)), text='Desenhar Linha', manager=self.ui_manager, object_id='#botao_bresenham')
 
         # --- Círculo ---
@@ -114,12 +122,13 @@ class PainelControle:
 
         self.elementos_circulo['label_raio'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 40), (60, 20)), text='Raio:', manager=self.ui_manager)
         self.elementos_circulo['raio'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 70, base_y + 40), (150, 30)), manager=self.ui_manager)
-        for k,v in [('centro_x','0'),('centro_y','0'),('raio','25')]: self.elementos_circulo[k].set_text(v)
+        for k, v in [('centro_x', '0'), ('centro_y', '0'), ('raio', '25')]:
+            self.elementos_circulo[k].set_text(v)
         self.elementos_circulo['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (210, 40)), text='Desenhar Círculo', manager=self.ui_manager, object_id='#botao_circulo')
 
         # --- Curva de Bézier ---
-        pontos_bezier = ['P0','P1','P2','P3']
-        coords_ini = [('-30','-10'),('-10','30'),('10','-30'),('30','10')]
+        pontos_bezier = ['P0', 'P1', 'P2', 'P3']
+        coords_ini = [('-30', '-10'), ('-10', '30'), ('10', '-30'), ('30', '10')]
         for i, (p, coords) in enumerate(zip(pontos_bezier, coords_ini)):
             y_off = base_y + i * 40
             self.elementos_bezier[f'label_{p.lower()}'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, y_off), (30, 20)), text=f'{p}:', manager=self.ui_manager)
@@ -139,8 +148,49 @@ class PainelControle:
         self.elementos_elipse['label_raios'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 40), (60, 20)), text='Raios:', manager=self.ui_manager)
         self.elementos_elipse['rx'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 70, base_y + 40), (70, 30)), manager=self.ui_manager)
         self.elementos_elipse['ry'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 145, base_y + 40), (75, 30)), manager=self.ui_manager)
-        for k,v in [('centro_x','0'),('centro_y','0'),('rx','30'),('ry','20')]: self.elementos_elipse[k].set_text(v)
-        self.elementos_elipse['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (210, 40)), text='Desenhar Elipse', manager=self.ui_manager, object_id='#botao_elipse')
+        for k, v in [('centro_x', '0'), ('centro_y', '0'), ('rx', '30'), ('ry', '20')]:
+            self.elementos_elipse[k].set_text(v)
+        self.elementos_elipse['botao'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (210, 40)),
+            text='Desenhar Elipse', manager=self.ui_manager, object_id='#botao_elipse'
+        )
+
+        # --- Triângulo (por 3 pontos) ---
+        self.elementos_triangulo['label_p1'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (30, 20)), text='P1:', manager=self.ui_manager)
+        self.elementos_triangulo['p1_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y), (50, 30)), manager=self.ui_manager)
+        self.elementos_triangulo['p1_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y), (50, 30)), manager=self.ui_manager)
+        self.elementos_triangulo['btn_p1'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y), (40, 30)), text='Def', manager=self.ui_manager, object_id='#tri_set_p1')
+
+        self.elementos_triangulo['label_p2'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 40), (30, 20)), text='P2:', manager=self.ui_manager)
+        self.elementos_triangulo['p2_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y + 40), (50, 30)), manager=self.ui_manager)
+        self.elementos_triangulo['p2_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 40), (50, 30)), manager=self.ui_manager)
+        self.elementos_triangulo['btn_p2'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 40), (40, 30)), text='Def', manager=self.ui_manager, object_id='#tri_set_p2')
+
+        self.elementos_triangulo['label_p3'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (30, 20)), text='P3:', manager=self.ui_manager)
+        self.elementos_triangulo['p3_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y + 80), (50, 30)), manager=self.ui_manager)
+        self.elementos_triangulo['p3_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 80), (50, 30)), manager=self.ui_manager)
+        self.elementos_triangulo['btn_p3'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 80), (40, 30)), text='Def', manager=self.ui_manager, object_id='#tri_set_p3')
+
+        # Botão para desenhar (fecha automaticamente p3->p1)
+        self.elementos_triangulo['botao'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 120), (180, 40)),
+            text='Desenhar Triângulo', manager=self.ui_manager, object_id='#botao_triangulo')
+
+        # Defaults
+        for k, v in [('p1_x', '-20'), ('p1_y', '-10'), ('p2_x', '20'), ('p2_y', '-10'), ('p3_x', '0'), ('p3_y', '20')]:
+            self.elementos_triangulo[k].set_text(v)
 
         # --- Polilinha ---
         self.elementos_polilinha['label'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (220, 20)), text='Pontos (x1,y1; x2,y2; ...):', manager=self.ui_manager)
@@ -185,11 +235,28 @@ class PainelControle:
         self.elementos_transformacao['rot_angulo'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, y_offset), (105, 30)), manager=self.ui_manager)
         self.elementos_transformacao['label_pivo'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset + 30), (140, 20)), text='Pivô (px, py):', manager=self.ui_manager)
         self.elementos_transformacao['rot_px'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, y_offset + 30), (50, 30)), manager=self.ui_manager)
-        self.elementos_transformacao['rot_py'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 205, y_offset + 30), (50, 30)), manager=self.ui_manager)
-        self.elementos_transformacao['btn_rot'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 260, y_offset), (60, 60)), text='Aplicar', manager=self.ui_manager, object_id='#rot_aplicar')
+        self.elementos_transformacao['rot_py'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 205, y_offset + 30), (50, 30)),
+            manager=self.ui_manager
+        )
+        self.elementos_transformacao['btn_rot'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 260, y_offset), (60, 60)),
+            text='Aplicar', manager=self.ui_manager, object_id='#rot_aplicar'
+        )
         self.elementos_transformacao['rot_angulo'].set_text('45')
         self.elementos_transformacao['rot_px'].set_text('0')
         self.elementos_transformacao['rot_py'].set_text('0')
+
+        # Preenchimento (Scanline)
+        y_offset = base_y_transf + 210
+        self.elementos_transformacao['label_preench'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset), (180, 20)),
+            text='Preenchimento (Scanline):', manager=self.ui_manager
+        )
+        self.elementos_transformacao['btn_preencher'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 200, y_offset - 5), (120, 30)),
+            text='Preencher', manager=self.ui_manager, object_id='#preencher_scanline'
+        )
 
         # Ações gerais
         self.botao_desfazer = pygame_gui.elements.UIButton(
@@ -200,7 +267,7 @@ class PainelControle:
             text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
 
     def mostrar_elementos_figura(self, figura):
-        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha]:
+        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo]:
             for comp in grupo.values():
                 comp.hide()
         mapping = {
@@ -208,7 +275,8 @@ class PainelControle:
             'Círculo': self.elementos_circulo,
             'Curva de Bézier': self.elementos_bezier,
             'Elipse': self.elementos_elipse,
-            'Polilinha': self.elementos_polilinha
+            'Polilinha': self.elementos_polilinha,
+            'Triângulo': self.elementos_triangulo
         }.get(figura, {})
         for comp in mapping.values():
             comp.show()
@@ -220,10 +288,10 @@ class PainelControle:
         if self._historico_cache_str == assinatura_completa:
             return
         self._historico_cache_str = assinatura_completa
-        
+
         lista_para_ui = []
         for i, desenho in enumerate(historico):
             prefixo = "* " if i == indice_selecionado else ""
             lista_para_ui.append(f"{prefixo}{i+1}. {desenho.tipo}")
-        
+
         self.lista_historico.set_item_list(lista_para_ui)

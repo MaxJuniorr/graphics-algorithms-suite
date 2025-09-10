@@ -18,6 +18,7 @@ class PainelControle:
         self.elementos_triangulo = {}
         self.elementos_quadrilatero = {}
         self.elementos_pentagono = {}
+        self.elementos_hexagono = {}
         self.elementos_transformacao = {}
 
         # Cache do histórico
@@ -94,7 +95,7 @@ class PainelControle:
             manager=self.ui_manager
         )
         self.seletor_figura = pygame_gui.elements.UIDropDownMenu(
-            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha', 'Triângulo', 'Quadrilátero', 'Pentágono'],
+            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha', 'Triângulo', 'Quadrilátero', 'Pentágono', 'Hexágono'],
             starting_option='Linha (Bresenham)',
             relative_rect=pygame.Rect((self.largura_canvas + 10, 210), (180, 30)),
             manager=self.ui_manager
@@ -303,6 +304,44 @@ class PainelControle:
         ]:
             self.elementos_pentagono[k].set_text(v)
 
+        # --- Hexágono (por 6 pontos) ---
+        hex_base = base_y - 40  # sobe um pouco para não colidir com as transformações
+        self.elementos_hexagono['label_p1'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, hex_base), (30, 20)), text='P1:', manager=self.ui_manager)
+        self.elementos_hexagono['p1_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, hex_base), (50, 30)), manager=self.ui_manager)
+        self.elementos_hexagono['p1_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, hex_base), (50, 30)), manager=self.ui_manager)
+        self.elementos_hexagono['btn_p1'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, hex_base), (40, 30)), text='Def', manager=self.ui_manager, object_id='#hex_set_p1')
+
+        for i in range(2, 7):
+            y_off = hex_base + (i - 1) * 40
+            self.elementos_hexagono[f'label_p{i}'] = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect((self.largura_canvas + 10, y_off), (30, 20)), text=f'P{i}:', manager=self.ui_manager)
+            self.elementos_hexagono[f'p{i}_x'] = pygame_gui.elements.UITextEntryLine(
+                relative_rect=pygame.Rect((self.largura_canvas + 40, y_off), (50, 30)), manager=self.ui_manager)
+            self.elementos_hexagono[f'p{i}_y'] = pygame_gui.elements.UITextEntryLine(
+                relative_rect=pygame.Rect((self.largura_canvas + 95, y_off), (50, 30)), manager=self.ui_manager)
+            self.elementos_hexagono[f'btn_p{i}'] = pygame_gui.elements.UIButton(
+                relative_rect=pygame.Rect((self.largura_canvas + 150, y_off), (40, 30)), text='Def', manager=self.ui_manager, object_id=f'#hex_set_p{i}')
+
+        self.elementos_hexagono['botao'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, hex_base + 240), (180, 40)),
+            text='Desenhar Hexágono', manager=self.ui_manager, object_id='#botao_hexagono')
+
+        # Defaults para formar um hexágono aproximado
+        defaults_hex = {
+            'p1_x': '-20', 'p1_y': '0',
+            'p2_x': '-10', 'p2_y': '17',
+            'p3_x': '10',  'p3_y': '17',
+            'p4_x': '20',  'p4_y': '0',
+            'p5_x': '10',  'p5_y': '-17',
+            'p6_x': '-10', 'p6_y': '-17',
+        }
+        for k, v in defaults_hex.items():
+            self.elementos_hexagono[k].set_text(v)
+
         # --- Transformações 2D ---
         base_y_transf = 500
         pygame_gui.elements.UILabel(
@@ -372,7 +411,7 @@ class PainelControle:
             text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
 
     def mostrar_elementos_figura(self, figura):
-        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo, self.elementos_quadrilatero, self.elementos_pentagono]:
+        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo, self.elementos_quadrilatero, self.elementos_pentagono, self.elementos_hexagono]:
             for comp in grupo.values():
                 comp.hide()
         mapping = {
@@ -383,7 +422,8 @@ class PainelControle:
             'Polilinha': self.elementos_polilinha,
             'Triângulo': self.elementos_triangulo,
             'Quadrilátero': self.elementos_quadrilatero,
-            'Pentágono': self.elementos_pentagono
+            'Pentágono': self.elementos_pentagono,
+            'Hexágono': self.elementos_hexagono
         }.get(figura, {})
         for comp in mapping.values():
             comp.show()

@@ -181,6 +181,9 @@ class Aplicacao:
         elif tipo_figura == 'pentagono':
             self.painel_controle.elementos_pentagono[f'{ponto}_x'].set_text(x_str)
             self.painel_controle.elementos_pentagono[f'{ponto}_y'].set_text(y_str)
+        elif tipo_figura == 'hexagono':
+            self.painel_controle.elementos_hexagono[f'{ponto}_x'].set_text(x_str)
+            self.painel_controle.elementos_hexagono[f'{ponto}_y'].set_text(y_str)
 
     def manipular_selecao_historico(self, evento):
         item_selecionado = evento.text
@@ -252,6 +255,18 @@ class Aplicacao:
                 self.area_desenho.adicionar_forma("Polilinha", { 'pontos': pts })
             except ValueError:
                 print("Erro: As coordenadas do pentágono devem ser números inteiros.")
+        elif evento.ui_element == painel.elementos_hexagono.get('botao'):
+            try:
+                p1 = (int(painel.elementos_hexagono['p1_x'].get_text()), int(painel.elementos_hexagono['p1_y'].get_text()))
+                p2 = (int(painel.elementos_hexagono['p2_x'].get_text()), int(painel.elementos_hexagono['p2_y'].get_text()))
+                p3 = (int(painel.elementos_hexagono['p3_x'].get_text()), int(painel.elementos_hexagono['p3_y'].get_text()))
+                p4 = (int(painel.elementos_hexagono['p4_x'].get_text()), int(painel.elementos_hexagono['p4_y'].get_text()))
+                p5 = (int(painel.elementos_hexagono['p5_x'].get_text()), int(painel.elementos_hexagono['p5_y'].get_text()))
+                p6 = (int(painel.elementos_hexagono['p6_x'].get_text()), int(painel.elementos_hexagono['p6_y'].get_text()))
+                pts = [p1, p2, p3, p4, p5, p6, p1]
+                self.area_desenho.adicionar_forma("Polilinha", { 'pontos': pts })
+            except ValueError:
+                print("Erro: As coordenadas do hexágono devem ser números inteiros.")
         elif evento.ui_element == painel.elementos_polilinha.get('botao'):
             try:
                 pontos_str = [p.strip() for p in painel.elementos_polilinha['entrada_pontos'].get_text().split(';')]
@@ -406,6 +421,16 @@ class Aplicacao:
                 painel.elementos_pentagono.get('btn_p5'): 'p5',
             }
             self.proximo_clique_define = ('pentagono', btn_map_p[evento.ui_element])
+        elif evento.ui_element in [painel.elementos_hexagono.get(k) for k in ['btn_p1','btn_p2','btn_p3','btn_p4','btn_p5','btn_p6']]:
+            btn_map_h = {
+                painel.elementos_hexagono.get('btn_p1'): 'p1',
+                painel.elementos_hexagono.get('btn_p2'): 'p2',
+                painel.elementos_hexagono.get('btn_p3'): 'p3',
+                painel.elementos_hexagono.get('btn_p4'): 'p4',
+                painel.elementos_hexagono.get('btn_p5'): 'p5',
+                painel.elementos_hexagono.get('btn_p6'): 'p6',
+            }
+            self.proximo_clique_define = ('hexagono', btn_map_h[evento.ui_element])
         elif evento.ui_element == painel.botao_limpar: self.area_desenho.limpar_pixels()
         elif evento.ui_element == painel.botao_desfazer: self.area_desenho.desfazer_ultimo_desenho()
         elif evento.ui_element == painel.botao_excluir_selecao:

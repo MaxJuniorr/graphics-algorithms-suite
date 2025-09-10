@@ -1,7 +1,6 @@
 import pygame
 import pygame_gui
 
-
 class PainelControle:
     def __init__(self, ui_manager, largura_painel, altura_total, largura_canvas):
         self.ui_manager = ui_manager
@@ -15,13 +14,13 @@ class PainelControle:
         self.elementos_bezier = {}
         self.elementos_elipse = {}
         self.elementos_polilinha = {}
+        self.elementos_transformacao = {}
         
         self._historico_cache_str = None
 
         self.construir_interface()
         self.mostrar_elementos_figura('Linha (Bresenham)')
 
-    # ---------------- Interface -----------------
     def construir_interface(self):
         # Histórico (painel à direita)
         margem_direita = 10
@@ -149,6 +148,48 @@ class PainelControle:
         self.elementos_polilinha['entrada_pontos'].set_text('-10,-10; 0,20; 10,-10; 20,20')
         self.elementos_polilinha['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 70), (210, 40)), text='Desenhar Polilinha', manager=self.ui_manager, object_id='#botao_polilinha')
 
+        # --- Transformações 2D ---
+        base_y_transf = 500
+        pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y_transf), (380, 20)),
+            text='--- Transformações 2D (no selecionado) ---',
+            manager=self.ui_manager
+        )
+
+        # Translação
+        y_offset = base_y_transf + 30
+        self.elementos_transformacao['label_trans'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset), (140, 20)), text='Translação (dx, dy):', manager=self.ui_manager)
+        self.elementos_transformacao['trans_x'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, y_offset), (50, 30)), manager=self.ui_manager)
+        self.elementos_transformacao['trans_y'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 205, y_offset), (50, 30)), manager=self.ui_manager)
+        self.elementos_transformacao['btn_trans'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 260, y_offset), (60, 30)), text='Aplicar', manager=self.ui_manager, object_id='#trans_aplicar')
+        self.elementos_transformacao['trans_x'].set_text('10')
+        self.elementos_transformacao['trans_y'].set_text('5')
+
+        # Escala
+        y_offset = base_y_transf + 70
+        self.elementos_transformacao['label_escala'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset), (140, 20)), text='Escala (sx, sy):', manager=self.ui_manager)
+        self.elementos_transformacao['escala_sx'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, y_offset), (50, 30)), manager=self.ui_manager)
+        self.elementos_transformacao['escala_sy'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 205, y_offset), (50, 30)), manager=self.ui_manager)
+        self.elementos_transformacao['label_ponto_fixo'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset + 30), (140, 20)), text='Ponto Fixo (cx, cy):', manager=self.ui_manager)
+        self.elementos_transformacao['escala_cx'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, y_offset + 30), (50, 30)), manager=self.ui_manager)
+        self.elementos_transformacao['escala_cy'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 205, y_offset + 30), (50, 30)), manager=self.ui_manager)
+        self.elementos_transformacao['btn_escala'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 260, y_offset), (60, 60)), text='Aplicar', manager=self.ui_manager, object_id='#escala_aplicar')
+        self.elementos_transformacao['escala_sx'].set_text('1.5')
+        self.elementos_transformacao['escala_sy'].set_text('1.5')
+        self.elementos_transformacao['escala_cx'].set_text('0')
+        self.elementos_transformacao['escala_cy'].set_text('0')
+
+        # Rotação
+        y_offset = base_y_transf + 140
+        self.elementos_transformacao['label_rot'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset), (140, 20)), text='Rotação (ângulo):', manager=self.ui_manager)
+        self.elementos_transformacao['rot_angulo'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, y_offset), (105, 30)), manager=self.ui_manager)
+        self.elementos_transformacao['label_pivo'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset + 30), (140, 20)), text='Pivô (px, py):', manager=self.ui_manager)
+        self.elementos_transformacao['rot_px'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, y_offset + 30), (50, 30)), manager=self.ui_manager)
+        self.elementos_transformacao['rot_py'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 205, y_offset + 30), (50, 30)), manager=self.ui_manager)
+        self.elementos_transformacao['btn_rot'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 260, y_offset), (60, 60)), text='Aplicar', manager=self.ui_manager, object_id='#rot_aplicar')
+        self.elementos_transformacao['rot_angulo'].set_text('45')
+        self.elementos_transformacao['rot_px'].set_text('0')
+        self.elementos_transformacao['rot_py'].set_text('0')
 
         # Ações gerais
         self.botao_desfazer = pygame_gui.elements.UIButton(
@@ -158,7 +199,6 @@ class PainelControle:
             relative_rect=pygame.Rect((self.largura_canvas + 10, self.altura_total - 50), (180, 35)),
             text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
 
-    # ---------------- Visibilidade -----------------
     def mostrar_elementos_figura(self, figura):
         for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha]:
             for comp in grupo.values():
@@ -173,7 +213,6 @@ class PainelControle:
         for comp in mapping.values():
             comp.show()
 
-    # ---------------- Histórico -----------------
     def atualizar_historico(self, historico, indice_selecionado):
         assinatura_desenhos = '|'.join(str(d.timestamp) for d in historico)
         assinatura_completa = f"{len(historico)}:{indice_selecionado}:{assinatura_desenhos}"

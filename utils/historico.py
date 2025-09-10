@@ -1,24 +1,24 @@
-from dataclasses import dataclass
-from typing import List, Tuple, Dict
+from dataclasses import dataclass, field
+from typing import List, Tuple, Dict, Any
 from datetime import datetime
 
 @dataclass
 class DesenhoHistorico:
-    tipo: str  # Tipo do desenho (Linha, Círculo, etc)
-    parametros: Dict  # Parâmetros usados (coordenadas, raio, etc)
-    pixels: List[Tuple[int, int]]  # Lista de pixels do desenho
-    timestamp: datetime  # Momento em que foi desenhado
+    """Representa um único objeto desenhado, definido por seus parâmetros."""
+    tipo: str
+    parametros: Dict[str, Any]
+    timestamp: datetime = field(default_factory=datetime.now)
+    # O campo 'pixels' foi removido. A rasterização agora é feita sob demanda.
 
 class Historico:
     def __init__(self):
         self.desenhos: List[DesenhoHistorico] = []
     
-    def adicionar_desenho(self, tipo: str, parametros: Dict, pixels: List[Tuple[int, int]]):
+    def adicionar_desenho(self, tipo: str, parametros: Dict[str, Any]):
+        """Adiciona um novo desenho ao histórico, baseado em seus parâmetros."""
         desenho = DesenhoHistorico(
             tipo=tipo,
-            parametros=parametros,
-            pixels=pixels,
-            timestamp=datetime.now()
+            parametros=parametros
         )
         self.desenhos.append(desenho)
     
@@ -28,25 +28,13 @@ class Historico:
     def obter_desenhos(self) -> List[DesenhoHistorico]:
         return self.desenhos
     
-    def desfazer_ultimo_desenho(self) -> List[Tuple[int, int]]:
-        """Remove o último desenho do histórico e retorna todos os pixels que devem permanecer visíveis."""
+    def desfazer_ultimo_desenho(self):
+        """Remove o último desenho do histórico."""
         if not self.desenhos:
-            return []
-        
-        self.desenhos.pop()  # Remove o último desenho
-        
-        # Retorna todos os pixels dos desenhos restantes
-        pixels = []
-        for desenho in self.desenhos:
-            pixels.extend(desenho.pixels)
-        return pixels
+            return
+        self.desenhos.pop()
 
-    def remover_por_indice(self, indice: int) -> List[Tuple[int, int]]:
-        """Remove o desenho pelo índice (0 = mais antigo) e retorna todos os pixels restantes."""
+    def remover_por_indice(self, indice: int):
+        """Remove o desenho pelo índice (0 = mais antigo)."""
         if 0 <= indice < len(self.desenhos):
             self.desenhos.pop(indice)
-        # Reconstroi lista de pixels restantes
-        pixels = []
-        for desenho in self.desenhos:
-            pixels.extend(desenho.pixels)
-        return pixels

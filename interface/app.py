@@ -2,10 +2,6 @@ import pygame
 import pygame_gui
 from interface.painel_controle import PainelControle
 from interface.area_desenho import AreaDesenho
-from algoritmos.bresenham import calcular_linha_bresenham
-from algoritmos.circulo_elipse import calcular_circulo, calcular_elipse
-from algoritmos.curvas_bezier import rasterizar_curva_bezier
-from algoritmos.polilinha import rasterizar_polilinha
 
 # --- Constantes de Layout ---
 LARGURA_TOTAL = 1200
@@ -126,9 +122,8 @@ class Aplicacao:
             try:
                 p1 = (int(painel.elementos_linha['p1_x'].get_text()), int(painel.elementos_linha['p1_y'].get_text()))
                 p2 = (int(painel.elementos_linha['p2_x'].get_text()), int(painel.elementos_linha['p2_y'].get_text()))
-                pixels = calcular_linha_bresenham(p1, p2)
                 parametros = {'p1': p1, 'p2': p2}
-                self.area_desenho.adicionar_pixels(pixels, "Linha (Bresenham)", parametros)
+                self.area_desenho.adicionar_forma("Linha (Bresenham)", parametros)
             except ValueError:
                 print("Erro: As coordenadas da linha devem ser números inteiros.")
 
@@ -136,18 +131,16 @@ class Aplicacao:
             try:
                 centro = (int(painel.elementos_circulo['centro_x'].get_text()), int(painel.elementos_circulo['centro_y'].get_text()))
                 raio = int(painel.elementos_circulo['raio'].get_text())
-                pixels = calcular_circulo(centro, raio)
                 parametros = {'centro': centro, 'raio': raio}
-                self.area_desenho.adicionar_pixels(pixels, "Círculo", parametros)
+                self.area_desenho.adicionar_forma("Círculo", parametros)
             except ValueError:
                 print("Erro: As coordenadas do centro e o raio devem ser números inteiros.")
 
         elif evento.ui_element == painel.elementos_bezier.get('botao'):
             try:
                 pontos = [ (int(painel.elementos_bezier[f'p{i}_x'].get_text()), int(painel.elementos_bezier[f'p{i}_y'].get_text())) for i in range(4) ]
-                pixels = rasterizar_curva_bezier(*pontos)
                 parametros = {f'p{i}': p for i, p in enumerate(pontos)}
-                self.area_desenho.adicionar_pixels(pixels, "Curva de Bézier", parametros)
+                self.area_desenho.adicionar_forma("Curva de Bézier", parametros)
             except ValueError:
                 print("Erro: As coordenadas dos pontos de controle devem ser números inteiros.")
         
@@ -156,16 +149,14 @@ class Aplicacao:
                 centro = (int(painel.elementos_elipse['centro_x'].get_text()), int(painel.elementos_elipse['centro_y'].get_text()))
                 rx = int(painel.elementos_elipse['rx'].get_text())
                 ry = int(painel.elementos_elipse['ry'].get_text())
-                pixels = calcular_elipse(centro, rx, ry)
                 parametros = {'centro': centro, 'rx': rx, 'ry': ry}
-                self.area_desenho.adicionar_pixels(pixels, "Elipse", parametros)
+                self.area_desenho.adicionar_forma("Elipse", parametros)
             except ValueError:
                 print("Erro: As coordenadas do centro e os raios devem ser números inteiros.")
 
         elif evento.ui_element == painel.elementos_polilinha.get('botao'):
             try:
                 texto_pontos = painel.elementos_polilinha['entrada_pontos'].get_text()
-                # Parse "x1,y1; x2,y2; ..."
                 pontos_str = [p.strip() for p in texto_pontos.split(';')]
                 pontos = []
                 for ponto_str in pontos_str:
@@ -177,9 +168,8 @@ class Aplicacao:
                     print("Erro: A polilinha precisa de pelo menos 2 pontos.")
                     return
 
-                pixels = rasterizar_polilinha(pontos)
                 parametros = {'pontos': pontos}
-                self.area_desenho.adicionar_pixels(pixels, "Polilinha", parametros)
+                self.area_desenho.adicionar_forma("Polilinha", parametros)
             except ValueError:
                 print("Erro: Formato dos pontos inválido. Use 'x1,y1; x2,y2; ...'")
         

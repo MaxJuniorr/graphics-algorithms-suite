@@ -1,5 +1,9 @@
 import pygame
 from utils.historico import Historico
+from algoritmos.bresenham import calcular_linha_bresenham
+from algoritmos.circulo_elipse import calcular_circulo, calcular_elipse
+from algoritmos.curvas_bezier import rasterizar_curva_bezier
+from algoritmos.polilinha import rasterizar_polilinha
 
 COR_FUNDO = (20, 20, 20)
 COR_GRADE = (40, 40, 40)
@@ -27,18 +31,14 @@ class AreaDesenho:
 
     def desenhar_grade(self):
         centro_x, centro_y = self.largura / 2, self.altura / 2
-        
-        # Limites da grade em coordenadas de grade
         meia_largura_grid = self.largura_grid // 2
         meia_altura_grid = self.altura_grid // 2
 
-        # Linhas verticais
         for x_grid in range(-meia_largura_grid, meia_largura_grid + 1):
             pos_x = centro_x + x_grid * self.tamanho_celula_x
             cor = COR_EIXO if x_grid == 0 else COR_GRADE
             pygame.draw.line(self.surface, cor, (pos_x, 0), (pos_x, self.altura))
 
-        # Linhas horizontais
         for y_grid in range(-meia_altura_grid, meia_altura_grid + 1):
             pos_y = centro_y - y_grid * self.tamanho_celula_y
             cor = COR_EIXO if y_grid == 0 else COR_GRADE
@@ -46,22 +46,15 @@ class AreaDesenho:
 
     def desenhar_pixel(self, x_grid, y_grid, cor=COR_PIXEL):
         if self.tamanho_celula_x <= 0 or self.tamanho_celula_y <= 0: return
-
-        # Converte coordenadas da grade (centro (0,0)) para coordenadas da tela (canto sup. esq. (0,0))
         centro_x_tela, centro_y_tela = self.largura / 2, self.altura / 2
-        
-        # Calcula a posição do canto superior esquerdo da célula da grade na tela
         x_tela = centro_x_tela + x_grid * self.tamanho_celula_x
         y_tela = centro_y_tela - (y_grid + 1) * self.tamanho_celula_y
-
-        # Pygame lida com o clipping de retângulos fora da superfície, então a verificação de limites não é necessária aqui.
         retangulo_pixel = pygame.Rect(x_tela, y_tela, self.tamanho_celula_x, self.tamanho_celula_y)
         pygame.draw.rect(self.surface, cor, retangulo_pixel)
 
-    def adicionar_pixels(self, pixels, tipo_desenho=None, parametros=None):
-        if tipo_desenho:
-            self.historico.adicionar_desenho(tipo_desenho, parametros or {}, pixels)
-        self.indice_selecionado = None # Desseleciona ao adicionar novo
+    def adicionar_forma(self, tipo_desenho, parametros):
+        self.historico.adicionar_desenho(tipo_desenho, parametros or {})
+        self.indice_selecionado = None
 
     def limpar_pixels(self):
         self.historico.limpar_historico()
@@ -94,24 +87,38 @@ class AreaDesenho:
         
         for i, desenho in enumerate(self.obter_historico()):
             cor = COR_SELECIONADO if i == self.indice_selecionado else COR_PIXEL
-            for pixel in desenho.pixels:
+            pixels = self.rasterizar_desenho(desenho)
+            for pixel in pixels:
                 self.desenhar_pixel(pixel[0], pixel[1], cor)
                 
         tela.blit(self.surface, (0, 0))
+
+    def rasterizar_desenho(self, desenho):
+        """Chama o algoritmo de rasterização apropriado para um desenho."""
+        tipo = desenho.tipo
+        params = desenho.parametros
+
+        if tipo == "Linha (Bresenham)":
+            return calcular_linha_bresenham(params['p1'], params['p2'])
+        elif tipo == "Círculo":
+            return calcular_circulo(params['centro'], params['raio'])
+        elif tipo == "Elipse":
+            return calcular_elipse(params['centro'], params['rx'], params['ry'])
+        elif tipo == "Curva de Bézier":
+            pontos = [params[f'p{i}'] for i in range(4)]
+            return rasterizar_curva_bezier(*pontos)
+        elif tipo == "Polilinha":
+            return rasterizar_polilinha(params['pontos'])
+        
+        return []
 
     def tela_para_grade(self, x_tela, y_tela):
         """Converte coordenadas da tela (pygame) para coordenadas da grade (cartesianas)."""
         if self.tamanho_celula_x <= 0 or self.tamanho_celula_y <= 0:
             return 0, 0
-
         centro_x_tela, centro_y_tela = self.largura / 2, self.altura / 2
-
-        # Calcula o deslocamento a partir do centro da tela
         offset_x = x_tela - centro_x_tela
-        offset_y = centro_y_tela - y_tela  # Inverte o eixo Y
-
-        # Converte o deslocamento em pixels para coordenadas de grade
+        offset_y = centro_y_tela - y_tela
         x_grid = int(offset_x // self.tamanho_celula_x)
         y_grid = int(offset_y // self.tamanho_celula_y)
-
         return x_grid, y_grid

@@ -1,5 +1,7 @@
 import math
 from typing import List, Tuple
+def round_half_up_simple(n):
+    return math.floor(n + 0.5)
 
 Point = Tuple[int, int]
 
@@ -71,5 +73,5 @@ def rotacionar(pontos: List[Point], angulo: float, pivo: Point) -> List[Point]:
         novo_x = novo_x_temp + px
         novo_y = novo_y_temp + py
         
-        pontos_rotacionados.append((round(novo_x), round(novo_y)))
+        pontos_rotacionados.append((round_half_up_simple(novo_x), round_half_up_simple(novo_y)))
     return pontos_rotacionados

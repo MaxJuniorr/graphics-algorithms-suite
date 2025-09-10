@@ -67,7 +67,7 @@ class Aplicacao:
             pontos = [desenho.parametros['p1'], desenho.parametros['p2']]
         elif desenho.tipo == "Curva de Bézier":
             pontos = [desenho.parametros[f'p{i}'] for i in range(4)]
-        elif desenho.tipo == "Polilinha":
+        elif desenho.tipo in ["Polilinha", "Pontos"]:
             pontos = desenho.parametros.get('pontos', [])
         else:
             # Para outros tipos como Círculo/Elipse, não há vértices a priori
@@ -81,7 +81,7 @@ class Aplicacao:
         elif desenho.tipo == "Curva de Bézier":
             for i, ponto in enumerate(novos_pontos):
                 desenho.parametros[f'p{i}'] = ponto
-        elif desenho.tipo == "Polilinha":
+        elif desenho.tipo in ["Polilinha", "Pontos"]:
             desenho.parametros['pontos'] = novos_pontos
 
     def _converter_para_polilinha(self, desenho):
@@ -235,19 +235,26 @@ class Aplicacao:
             indice_selecionado = self.area_desenho.obter_indice_selecionado()
             if indice_selecionado is None: print("Nenhum objeto selecionado."); return
             desenho = self.area_desenho.obter_historico()[indice_selecionado]
-            pontos = []
-            if desenho.tipo in ["Círculo", "Elipse"]:
-                pontos = self._converter_para_polilinha(desenho)
-            else:
-                _, pontos = self._obter_vertices_selecionados()
-            if not pontos: return
+            
             try:
                 angulo = float(painel.elementos_transformacao['rot_angulo'].get_text())
-                px = int(painel.elementos_transformacao['rot_px'].get_text())
-                py = int(painel.elementos_transformacao['rot_py'].get_text())
-                novos_pontos = transform.rotacionar(pontos, angulo, (px, py))
-                self._atualizar_vertices_desenho(desenho, novos_pontos)
-            except ValueError: print("Erro nos parâmetros de rotação.")
+                pivo = (int(painel.elementos_transformacao['rot_px'].get_text()), int(painel.elementos_transformacao['rot_py'].get_text()))
+
+                if desenho.tipo in ["Círculo", "Elipse"]:
+                    print(f"Rotacionando objeto paramétrico '{desenho.tipo}' como nuvem de pontos.")
+                    pontos_rasterizados = self.area_desenho.rasterizar_desenho(desenho)
+                    novos_pontos = transform.rotacionar(pontos_rasterizados, angulo, pivo)
+                    desenho.tipo = "Pontos"
+                    desenho.parametros = {'pontos': novos_pontos}
+                else:
+                    _, pontos_vertice = self._obter_vertices_selecionados()
+                    if not pontos_vertice: 
+                        print(f"Objeto '{desenho.tipo}' não tem vértices para rotacionar.")
+                        return
+                    novos_pontos = transform.rotacionar(pontos_vertice, angulo, pivo)
+                    self._atualizar_vertices_desenho(desenho, novos_pontos)
+            except ValueError: 
+                print("Erro nos parâmetros de rotação. Verifique se são números válidos.")
 
         # --- Botões de Definição e Ações Gerais ---
         elif evento.ui_element in [painel.elementos_linha.get(k) for k in ['btn_p1', 'btn_p2']]:

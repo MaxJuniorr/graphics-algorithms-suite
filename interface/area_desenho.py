@@ -109,6 +109,8 @@ class AreaDesenho:
             return rasterizar_curva_bezier(*pontos)
         elif tipo == "Polilinha":
             return rasterizar_polilinha(params['pontos'])
+        elif tipo == "Pontos":
+            return params.get('pontos', [])
         
         return []
 

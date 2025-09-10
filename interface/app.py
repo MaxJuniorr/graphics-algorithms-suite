@@ -30,6 +30,50 @@ class Aplicacao:
         self.clock = pygame.time.Clock()
         self.proximo_clique_define = None
 
+    def _vertices_para_preenchimento(self, desenho, num_segmentos: int = 72):
+        """Retorna uma lista de vértices inteiros que define um polígono fechado
+        equivalente ao desenho selecionado, sem modificar o desenho original.
+        Suporta: Polilinha, Círculo, Elipse.
+        """
+        params = desenho.parametros
+        if desenho.tipo == "Polilinha":
+            vertices = list(params.get('pontos', []))
+            if len(vertices) < 3:
+                return []
+            if vertices[0] != vertices[-1]:
+                vertices.append(vertices[0])
+            return vertices
+        if desenho.tipo == "Círculo":
+            centro = params.get('centro', (0, 0))
+            raio = params.get('raio', 0)
+            if raio <= 0:
+                return []
+            pts = []
+            for i in range(num_segmentos):
+                ang = 2 * math.pi * i / num_segmentos
+                x = centro[0] + raio * math.cos(ang)
+                y = centro[1] + raio * math.sin(ang)
+                pts.append((round(x), round(y)))
+            if pts and pts[0] != pts[-1]:
+                pts.append(pts[0])
+            return pts
+        if desenho.tipo == "Elipse":
+            centro = params.get('centro', (0, 0))
+            rx = params.get('rx', 0)
+            ry = params.get('ry', 0)
+            if rx <= 0 or ry <= 0:
+                return []
+            pts = []
+            for i in range(num_segmentos):
+                ang = 2 * math.pi * i / num_segmentos
+                x = centro[0] + rx * math.cos(ang)
+                y = centro[1] + ry * math.sin(ang)
+                pts.append((round(x), round(y)))
+            if pts and pts[0] != pts[-1]:
+                pts.append(pts[0])
+            return pts
+        return []
+
     def executar(self):
         while self.rodando:
             delta_time = self.clock.tick(60) / 1000.0
@@ -134,6 +178,9 @@ class Aplicacao:
         elif tipo_figura == 'quadrilatero':
             self.painel_controle.elementos_quadrilatero[f'{ponto}_x'].set_text(x_str)
             self.painel_controle.elementos_quadrilatero[f'{ponto}_y'].set_text(y_str)
+        elif tipo_figura == 'pentagono':
+            self.painel_controle.elementos_pentagono[f'{ponto}_x'].set_text(x_str)
+            self.painel_controle.elementos_pentagono[f'{ponto}_y'].set_text(y_str)
 
     def manipular_selecao_historico(self, evento):
         item_selecionado = evento.text
@@ -194,6 +241,17 @@ class Aplicacao:
                 self.area_desenho.adicionar_forma("Polilinha", { 'pontos': pts })
             except ValueError:
                 print("Erro: As coordenadas do quadrilátero devem ser números inteiros.")
+        elif evento.ui_element == painel.elementos_pentagono.get('botao'):
+            try:
+                p1 = (int(painel.elementos_pentagono['p1_x'].get_text()), int(painel.elementos_pentagono['p1_y'].get_text()))
+                p2 = (int(painel.elementos_pentagono['p2_x'].get_text()), int(painel.elementos_pentagono['p2_y'].get_text()))
+                p3 = (int(painel.elementos_pentagono['p3_x'].get_text()), int(painel.elementos_pentagono['p3_y'].get_text()))
+                p4 = (int(painel.elementos_pentagono['p4_x'].get_text()), int(painel.elementos_pentagono['p4_y'].get_text()))
+                p5 = (int(painel.elementos_pentagono['p5_x'].get_text()), int(painel.elementos_pentagono['p5_y'].get_text()))
+                pts = [p1, p2, p3, p4, p5, p1]
+                self.area_desenho.adicionar_forma("Polilinha", { 'pontos': pts })
+            except ValueError:
+                print("Erro: As coordenadas do pentágono devem ser números inteiros.")
         elif evento.ui_element == painel.elementos_polilinha.get('botao'):
             try:
                 pontos_str = [p.strip() for p in painel.elementos_polilinha['entrada_pontos'].get_text().split(';')]
@@ -297,27 +355,23 @@ class Aplicacao:
             except ValueError: print("Erro nos parâmetros de rotação.")
 
         elif evento.ui_element == painel.elementos_transformacao.get('btn_preencher'):
-            # Preenche polígono via Scanline (requer Polilinha fechada)
+            # Preenche polígono via Scanline. Agora suporta Polilinha, Círculo e Elipse.
             indice_selecionado = self.area_desenho.obter_indice_selecionado()
             if indice_selecionado is None:
                 print("Nenhum objeto selecionado.")
                 return
             desenho = self.area_desenho.obter_historico()[indice_selecionado]
-            if desenho.tipo != "Polilinha":
-                print("Preenchimento disponível apenas para Polilinha.")
+            if desenho.tipo not in ["Polilinha", "Círculo", "Elipse"]:
+                print("Preenchimento disponível para Polilinha, Círculo e Elipse.")
                 return
-            vertices = list(desenho.parametros.get('pontos', []))
+            vertices = self._vertices_para_preenchimento(desenho)
             if len(vertices) < 3:
-                print("A Polilinha deve ter ao menos 3 pontos.")
+                print("Não há vértices suficientes para preencher.")
                 return
-            # Garante fechamento
-            if vertices[0] != vertices[-1]:
-                vertices.append(vertices[0])
             pixels = preencher_scanline(vertices)
             if not pixels:
                 print("Nada a preencher (verifique se o polígono é simples/fechado).")
                 return
-            # Adiciona como um novo objeto de pontos preenchidos
             self.area_desenho.adicionar_forma("Pontos", { 'pontos': pixels })
 
         # --- Botões de Definição e Ações Gerais ---
@@ -343,6 +397,15 @@ class Aplicacao:
                 painel.elementos_quadrilatero.get('btn_p4'): 'p4',
             }
             self.proximo_clique_define = ('quadrilatero', btn_map_q[evento.ui_element])
+        elif evento.ui_element in [painel.elementos_pentagono.get(k) for k in ['btn_p1','btn_p2','btn_p3','btn_p4','btn_p5']]:
+            btn_map_p = {
+                painel.elementos_pentagono.get('btn_p1'): 'p1',
+                painel.elementos_pentagono.get('btn_p2'): 'p2',
+                painel.elementos_pentagono.get('btn_p3'): 'p3',
+                painel.elementos_pentagono.get('btn_p4'): 'p4',
+                painel.elementos_pentagono.get('btn_p5'): 'p5',
+            }
+            self.proximo_clique_define = ('pentagono', btn_map_p[evento.ui_element])
         elif evento.ui_element == painel.botao_limpar: self.area_desenho.limpar_pixels()
         elif evento.ui_element == painel.botao_desfazer: self.area_desenho.desfazer_ultimo_desenho()
         elif evento.ui_element == painel.botao_excluir_selecao:

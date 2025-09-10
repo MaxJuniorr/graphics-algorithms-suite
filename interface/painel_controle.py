@@ -17,6 +17,7 @@ class PainelControle:
         self.elementos_polilinha = {}
         self.elementos_triangulo = {}
         self.elementos_quadrilatero = {}
+        self.elementos_pentagono = {}
         self.elementos_transformacao = {}
 
         # Cache do histórico
@@ -93,7 +94,7 @@ class PainelControle:
             manager=self.ui_manager
         )
         self.seletor_figura = pygame_gui.elements.UIDropDownMenu(
-            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha', 'Triângulo', 'Quadrilátero'],
+            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha', 'Triângulo', 'Quadrilátero', 'Pentágono'],
             starting_option='Linha (Bresenham)',
             relative_rect=pygame.Rect((self.largura_canvas + 10, 210), (180, 30)),
             manager=self.ui_manager
@@ -243,6 +244,65 @@ class PainelControle:
         for k, v in [('p1_x','-20'),('p1_y','-20'),('p2_x','20'),('p2_y','-20'),('p3_x','20'),('p3_y','20'),('p4_x','-20'),('p4_y','20')]:
             self.elementos_quadrilatero[k].set_text(v)
 
+        # --- Pentágono (por 5 pontos) ---
+        self.elementos_pentagono['label_p1'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (30, 20)), text='P1:', manager=self.ui_manager)
+        self.elementos_pentagono['p1_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y), (50, 30)), manager=self.ui_manager)
+        self.elementos_pentagono['p1_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y), (50, 30)), manager=self.ui_manager)
+        self.elementos_pentagono['btn_p1'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y), (40, 30)), text='Def', manager=self.ui_manager, object_id='#pent_set_p1')
+
+        self.elementos_pentagono['label_p2'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 40), (30, 20)), text='P2:', manager=self.ui_manager)
+        self.elementos_pentagono['p2_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y + 40), (50, 30)), manager=self.ui_manager)
+        self.elementos_pentagono['p2_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 40), (50, 30)), manager=self.ui_manager)
+        self.elementos_pentagono['btn_p2'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 40), (40, 30)), text='Def', manager=self.ui_manager, object_id='#pent_set_p2')
+
+        self.elementos_pentagono['label_p3'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (30, 20)), text='P3:', manager=self.ui_manager)
+        self.elementos_pentagono['p3_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y + 80), (50, 30)), manager=self.ui_manager)
+        self.elementos_pentagono['p3_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 80), (50, 30)), manager=self.ui_manager)
+        self.elementos_pentagono['btn_p3'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 80), (40, 30)), text='Def', manager=self.ui_manager, object_id='#pent_set_p3')
+
+        self.elementos_pentagono['label_p4'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 120), (30, 20)), text='P4:', manager=self.ui_manager)
+        self.elementos_pentagono['p4_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y + 120), (50, 30)), manager=self.ui_manager)
+        self.elementos_pentagono['p4_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 120), (50, 30)), manager=self.ui_manager)
+        self.elementos_pentagono['btn_p4'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 120), (40, 30)), text='Def', manager=self.ui_manager, object_id='#pent_set_p4')
+
+        self.elementos_pentagono['label_p5'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 160), (30, 20)), text='P5:', manager=self.ui_manager)
+        self.elementos_pentagono['p5_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y + 160), (50, 30)), manager=self.ui_manager)
+        self.elementos_pentagono['p5_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 160), (50, 30)), manager=self.ui_manager)
+        self.elementos_pentagono['btn_p5'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 160), (40, 30)), text='Def', manager=self.ui_manager, object_id='#pent_set_p5')
+
+        self.elementos_pentagono['botao'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 200), (180, 40)),
+            text='Desenhar Pentágono', manager=self.ui_manager, object_id='#botao_pentagono')
+
+        for k, v in [
+            ('p1_x','-20'),('p1_y','-10'),
+            ('p2_x','0'),('p2_y','20'),
+            ('p3_x','20'),('p3_y','-10'),
+            ('p4_x','10'),('p4_y','-25'),
+            ('p5_x','-10'),('p5_y','-25'),
+        ]:
+            self.elementos_pentagono[k].set_text(v)
+
         # --- Transformações 2D ---
         base_y_transf = 500
         pygame_gui.elements.UILabel(
@@ -312,7 +372,7 @@ class PainelControle:
             text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
 
     def mostrar_elementos_figura(self, figura):
-        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo, self.elementos_quadrilatero]:
+        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo, self.elementos_quadrilatero, self.elementos_pentagono]:
             for comp in grupo.values():
                 comp.hide()
         mapping = {
@@ -322,7 +382,8 @@ class PainelControle:
             'Elipse': self.elementos_elipse,
             'Polilinha': self.elementos_polilinha,
             'Triângulo': self.elementos_triangulo,
-            'Quadrilátero': self.elementos_quadrilatero
+            'Quadrilátero': self.elementos_quadrilatero,
+            'Pentágono': self.elementos_pentagono
         }.get(figura, {})
         for comp in mapping.values():
             comp.show()

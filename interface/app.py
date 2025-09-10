@@ -29,6 +29,8 @@ class Aplicacao:
         self.rodando = True
         self.clock = pygame.time.Clock()
         self.proximo_clique_define = None
+        self.polilinha_capturando = False
+        self.polilinha_pontos = []
 
     def _vertices_para_preenchimento(self, desenho, num_segmentos: int = 72):
         """Retorna uma lista de vértices inteiros que define um polígono fechado
@@ -85,6 +87,16 @@ class Aplicacao:
                         coords = self.area_desenho.tela_para_grade(*evento.pos)
                         self.definir_coordenadas_por_clique(coords)
                         self.proximo_clique_define = None
+                    # Captura de pontos da polilinha por clique
+                    elif self.polilinha_capturando and evento.pos[0] < LARGURA_CANVAS:
+                        coords = self.area_desenho.tela_para_grade(*evento.pos)
+                        self.polilinha_pontos.append((coords[0], coords[1]))
+                        # Atualiza preview textual no painel
+                        try:
+                            texto = '; '.join(f"{x},{y}" for x, y in self.polilinha_pontos)
+                            self.painel_controle.elementos_polilinha['entrada_pontos'].set_text(texto)
+                        except Exception:
+                            pass
                 self.ui_manager.process_events(evento)
                 if evento.type == pygame_gui.UI_BUTTON_PRESSED:
                     self.manipular_eventos_ui(evento)
@@ -203,9 +215,7 @@ class Aplicacao:
                 print("Nada a preencher (seed inválida ou célula já ocupada).")
                 return
             self.area_desenho.adicionar_forma("Pontos", { 'pontos': preenchidos })
-        elif tipo_figura == 'hexagono':
-            self.painel_controle.elementos_hexagono[f'{ponto}_x'].set_text(x_str)
-            self.painel_controle.elementos_hexagono[f'{ponto}_y'].set_text(y_str)
+        
 
     def manipular_selecao_historico(self, evento):
         item_selecionado = evento.text
@@ -296,6 +306,39 @@ class Aplicacao:
                 if len(pontos) < 2: print("Erro: A polilinha precisa de pelo menos 2 pontos."); return
                 self.area_desenho.adicionar_forma("Polilinha", {'pontos': pontos})
             except ValueError: print("Erro: Formato dos pontos inválido. Use 'x1,y1; x2,y2; ...'")
+        elif evento.ui_element == painel.elementos_polilinha.get('btn_iniciar_clique'):
+            self.polilinha_capturando = True
+            self.polilinha_pontos = []
+            self.painel_controle.elementos_polilinha['entrada_pontos'].set_text('')
+            print("Clique no canvas para adicionar vértices. Clique em 'Finalizar' para concluir.")
+        elif evento.ui_element == painel.elementos_polilinha.get('btn_finalizar_clique'):
+            if len(self.polilinha_pontos) < 2:
+                print("Polilinha por clique requer pelo menos 2 pontos.")
+            else:
+                self.area_desenho.adicionar_forma("Polilinha", {'pontos': list(self.polilinha_pontos)})
+            self.polilinha_capturando = False
+            self.polilinha_pontos = []
+        elif evento.ui_element == painel.elementos_polilinha.get('btn_ligar_primeiro'):
+            # Fecha a polilinha ligando o último ponto ao primeiro
+            if self.polilinha_capturando:
+                if len(self.polilinha_pontos) >= 1 and self.polilinha_pontos[-1] != self.polilinha_pontos[0]:
+                    self.polilinha_pontos.append(self.polilinha_pontos[0])
+                    try:
+                        texto = '; '.join(f"{x},{y}" for x, y in self.polilinha_pontos)
+                        self.painel_controle.elementos_polilinha['entrada_pontos'].set_text(texto)
+                    except Exception:
+                        pass
+            else:
+                try:
+                    pontos_str = [p.strip() for p in painel.elementos_polilinha['entrada_pontos'].get_text().split(';')]
+                    pontos = [tuple(map(int, p.split(','))) for p in pontos_str if p]
+                    if pontos:
+                        if pontos[-1] != pontos[0]:
+                            pontos.append(pontos[0])
+                            texto = '; '.join(f"{x},{y}" for x, y in pontos)
+                            self.painel_controle.elementos_polilinha['entrada_pontos'].set_text(texto)
+                except ValueError:
+                    print("Erro: Formato dos pontos inválido. Use 'x1,y1; x2,y2; ...'")
         
         # --- Lógica de Transformação ---
         elif evento.ui_element == painel.elementos_transformacao.get('btn_trans'):

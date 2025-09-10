@@ -200,6 +200,18 @@ class PainelControle:
         self.elementos_polilinha['entrada_pontos'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 30), (210, 30)), manager=self.ui_manager)
         self.elementos_polilinha['entrada_pontos'].set_text('-10,-10; 0,20; 10,-10; 20,20')
         self.elementos_polilinha['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 70), (210, 40)), text='Desenhar Polilinha', manager=self.ui_manager, object_id='#botao_polilinha')
+        # Botões para desenhar por clique
+        self.elementos_polilinha['btn_iniciar_clique'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 115), (100, 28)),
+            text='Iniciar clique', manager=self.ui_manager, object_id='#polilinha_iniciar_clique')
+        self.elementos_polilinha['btn_finalizar_clique'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 120, base_y + 115), (100, 28)),
+            text='Finalizar', manager=self.ui_manager, object_id='#polilinha_finalizar_clique')
+
+        # Botão para ligar ao primeiro vértice (fechar polilinha)
+        self.elementos_polilinha['btn_ligar_primeiro'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 150), (210, 28)),
+            text='Ligar ao primeiro', manager=self.ui_manager, object_id='#polilinha_ligar_primeiro')
 
         # --- Quadrilátero (por 4 pontos) ---
         self.elementos_quadrilatero['label_p1'] = pygame_gui.elements.UILabel(

@@ -98,3 +98,20 @@ class AreaDesenho:
                 self.desenhar_pixel(pixel[0], pixel[1], cor)
                 
         tela.blit(self.surface, (0, 0))
+
+    def tela_para_grade(self, x_tela, y_tela):
+        """Converte coordenadas da tela (pygame) para coordenadas da grade (cartesianas)."""
+        if self.tamanho_celula_x <= 0 or self.tamanho_celula_y <= 0:
+            return 0, 0
+
+        centro_x_tela, centro_y_tela = self.largura / 2, self.altura / 2
+
+        # Calcula o deslocamento a partir do centro da tela
+        offset_x = x_tela - centro_x_tela
+        offset_y = centro_y_tela - y_tela  # Inverte o eixo Y
+
+        # Converte o deslocamento em pixels para coordenadas de grade
+        x_grid = int(offset_x // self.tamanho_celula_x)
+        y_grid = int(offset_y // self.tamanho_celula_y)
+
+        return x_grid, y_grid

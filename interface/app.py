@@ -8,7 +8,7 @@ from algoritmos.curvas_bezier import rasterizar_curva_bezier
 
 # --- Constantes de Layout ---
 LARGURA_TOTAL = 1200
-ALTURA_TOTAL = 950
+ALTURA_TOTAL = 800
 LARGURA_PAINEL = 400
 LARGURA_CANVAS = LARGURA_TOTAL - LARGURA_PAINEL
 ALTURA_CANVAS = ALTURA_TOTAL

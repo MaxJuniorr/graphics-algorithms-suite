@@ -7,7 +7,7 @@ from algoritmos.bresenham import calcular_linha_bresenham
 from algoritmos.circulo_elipse import calcular_circulo, calcular_elipse
 from algoritmos.curvas_bezier import rasterizar_curva_bezier
 from algoritmos.polilinha import rasterizar_polilinha
-from algoritmos.preenchimento import preencher_scanline, preencher_recursao, preencher_flood_canvas
+from algoritmos.preenchimento import preencher_scanline, preencher_recursao, preencher_flood_canvas, preencher_scanline_multi
 import algoritmos.transformacoes as transform
 
 # --- Constantes de Layout ---
@@ -438,21 +438,38 @@ class Aplicacao:
             # Preenche via Scanline: suporta Polilinha, Círculo e Elipse.
             indice_selecionado = self.area_desenho.obter_indice_selecionado()
             if indice_selecionado is None:
-                print("Nenhum objeto selecionado.")
+                # Sem seleção: trata todos os polígonos como um único conjunto (regra par-ímpar global)
+                historico = self.area_desenho.obter_historico()
+                todos_vertices = []
+                for d in historico:
+                    if d.tipo in ["Polilinha", "Círculo", "Elipse"]:
+                        verts = self._vertices_para_preenchimento(d)
+                        if len(verts) >= 3:
+                            todos_vertices.append(verts)
+                if not todos_vertices:
+                    print("Nenhum polígono válido para preencher no canvas.")
+                    return
+                pixels = preencher_scanline_multi(todos_vertices)
+                if not pixels:
+                    print("Nada a preencher considerando todos os polígonos.")
+                    return
+                self.area_desenho.adicionar_forma("Pontos", { 'pontos': pixels })
+                print(f"Scanline aplicado tratando {len(todos_vertices)} polígonos como um só.")
                 return
-            desenho = self.area_desenho.obter_historico()[indice_selecionado]
-            if desenho.tipo not in ["Polilinha", "Círculo", "Elipse"]:
-                print("Scanline disponível para Polilinha, Círculo e Elipse.")
-                return
-            vertices = self._vertices_para_preenchimento(desenho)
-            if len(vertices) < 3:
-                print("Não há vértices suficientes para preencher.")
-                return
-            pixels = preencher_scanline(vertices)
-            if not pixels:
-                print("Nada a preencher (verifique se o polígono é simples/fechado).")
-                return
-            self.area_desenho.adicionar_forma("Pontos", { 'pontos': pixels })
+            else:
+                desenho = self.area_desenho.obter_historico()[indice_selecionado]
+                if desenho.tipo not in ["Polilinha", "Círculo", "Elipse"]:
+                    print("Scanline disponível para Polilinha, Círculo e Elipse.")
+                    return
+                vertices = self._vertices_para_preenchimento(desenho)
+                if len(vertices) < 3:
+                    print("Não há vértices suficientes para preencher.")
+                    return
+                pixels = preencher_scanline(vertices)
+                if not pixels:
+                    print("Nada a preencher (verifique se o polígono é simples/fechado).")
+                    return
+                self.area_desenho.adicionar_forma("Pontos", { 'pontos': pixels })
 
         elif evento.ui_element == painel.elementos_transformacao.get('btn_preencher_rec'):
             # Ativa modo seed por clique para Flood Fill

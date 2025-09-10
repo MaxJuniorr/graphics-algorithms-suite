@@ -66,6 +66,79 @@ def preencher_scanline(vertices: List[Point]) -> List[Point]:
 	return unicos
 
 
+def preencher_scanline_multi(poligonos: List[List[Point]]) -> List[Point]:
+	"""
+	Aplica Scanline considerando múltiplos polígonos ao mesmo tempo (regra par-ímpar).
+
+	- poligonos: lista de polígonos; cada polígono é uma lista de vértices (x,y) em ordem.
+	- Retorna: lista de pixels (x, y) inteiros preenchidos considerando todos como um só conjunto.
+	"""
+	# Filtra e normaliza polígonos válidos
+	segmentos = []  # lista de pares ((x1,y1),(x2,y2))
+	min_y_glb = None
+	max_y_glb = None
+	for verts in poligonos:
+		if not verts or len(verts) < 3:
+			continue
+		pts = list(verts)
+		if pts[0] != pts[-1]:
+			pts.append(pts[0])
+		for i in range(len(pts) - 1):
+			a = pts[i]
+			b = pts[i + 1]
+			segmentos.append((a, b))
+			# Atualiza faixa global de varredura
+			ay, by = a[1], b[1]
+			lo = min(ay, by)
+			hi = max(ay, by)
+			if min_y_glb is None or lo < min_y_glb:
+				min_y_glb = lo
+			if max_y_glb is None or hi > max_y_glb:
+				max_y_glb = hi
+
+	if not segmentos or min_y_glb is None or max_y_glb is None:
+		return []
+
+	preenchidos: List[Point] = []
+
+	for y in range(min_y_glb, max_y_glb + 1):
+		xs: List[float] = []
+		for (x1, y1), (x2, y2) in segmentos:
+			# Ignora arestas horizontais
+			if y1 == y2:
+				continue
+			ymin = min(y1, y2)
+			ymax = max(y1, y2)
+			# Intervalo semiaberto [ymin, ymax)
+			if y >= ymin and y < ymax:
+				t = (y - y1) / (y2 - y1)
+				x = x1 + t * (x2 - x1)
+				xs.append(x)
+
+		if not xs:
+			continue
+
+		xs.sort()
+		for j in range(0, len(xs), 2):
+			if j + 1 >= len(xs):
+				break
+			x_in = xs[j]
+			x_out = xs[j + 1]
+			xi = math.ceil(min(x_in, x_out))
+			xf = math.floor(max(x_in, x_out))
+			for x in range(xi, xf + 1):
+				preenchidos.append((x, y))
+
+	# Remove duplicados preservando ordem
+	vistos = set()
+	unicos: List[Point] = []
+	for p in preenchidos:
+		if p not in vistos:
+			vistos.add(p)
+			unicos.append(p)
+	return unicos
+
+
 def _ponto_em_segmento(p: Point, a: Point, b: Point) -> bool:
 	"""Retorna True se o ponto p está exatamente no segmento [a,b]."""
 	(x, y), (x1, y1), (x2, y2) = p, a, b

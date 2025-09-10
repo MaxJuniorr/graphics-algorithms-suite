@@ -114,9 +114,12 @@ class Aplicacao:
         if tipo_figura == 'linha':
             self.painel_controle.elementos_linha[f'{ponto}_x'].set_text(x_str)
             self.painel_controle.elementos_linha[f'{ponto}_y'].set_text(y_str)
-        elif tipo_figura == 'circulo' or tipo_figura == 'elipse':
+        elif tipo_figura == 'circulo':
             self.painel_controle.elementos_circulo['centro_x'].set_text(x_str)
             self.painel_controle.elementos_circulo['centro_y'].set_text(y_str)
+        elif tipo_figura == 'elipse':
+            self.painel_controle.elementos_elipse['centro_x'].set_text(x_str)
+            self.painel_controle.elementos_elipse['centro_y'].set_text(y_str)
         elif tipo_figura == 'bezier':
             self.painel_controle.elementos_bezier[f'{ponto}_x'].set_text(x_str)
             self.painel_controle.elementos_bezier[f'{ponto}_y'].set_text(y_str)

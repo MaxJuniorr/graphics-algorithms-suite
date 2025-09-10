@@ -22,11 +22,6 @@ class Aplicacao:
         pygame.display.set_caption("Trabalho de Computação Gráfica")
         
         self.ui_manager = pygame_gui.UIManager((LARGURA_TOTAL, ALTURA_TOTAL))
-        # Preload de fontes usadas em tags <b> e <i> do histórico para evitar avisos
-        self.ui_manager.preload_fonts([
-            {'name': 'noto_sans', 'point_size': 14, 'style': 'bold', 'antialiased': True},
-            {'name': 'noto_sans', 'point_size': 14, 'style': 'italic', 'antialiased': True},
-        ])
         
         self.area_desenho = AreaDesenho(LARGURA_CANVAS, ALTURA_CANVAS, largura_grid_inicial, altura_grid_inicial)
         self.painel_controle = PainelControle(self.ui_manager, LARGURA_PAINEL, ALTURA_TOTAL, LARGURA_CANVAS)
@@ -34,20 +29,6 @@ class Aplicacao:
         self.rodando = True
         self.clock = pygame.time.Clock()
         
-    def mostrar_historico(self):
-        """Mostra o histórico de desenhos na tela."""
-        historico = self.area_desenho.obter_historico()
-        print("\n=== Histórico de Desenhos ===")
-        if not historico:
-            print("Nenhum desenho no histórico.")
-        else:
-            for i, desenho in enumerate(historico, 1):
-                print(f"\nDesenho {i}:")
-                print(f"Tipo: {desenho.tipo}")
-                print(f"Parâmetros: {desenho.parametros}")
-                print(f"Timestamp: {desenho.timestamp.strftime('%H:%M:%S')}")
-                print(f"Total de pixels: {len(desenho.pixels)}")
-
     def executar(self):
         while self.rodando:
             delta_time = self.clock.tick(60) / 1000.0
@@ -56,21 +37,26 @@ class Aplicacao:
                 if evento.type == pygame.QUIT:
                     self.rodando = False
                 
-                # Processar eventos do pygame_gui
                 self.ui_manager.process_events(evento)
                 
-                # Processar eventos específicos da aplicação
                 if evento.type == pygame_gui.UI_BUTTON_PRESSED:
                     self.manipular_eventos_ui(evento)
                 elif evento.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     if evento.ui_element == self.painel_controle.seletor_figura:
                         self.painel_controle.mostrar_elementos_figura(evento.text)
-                
-            # Atualiza o histórico a cada frame
-            self.painel_controle.atualizar_historico(self.area_desenho.obter_historico())
+                elif evento.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
+                    if evento.ui_element == self.painel_controle.lista_historico:
+                        self.manipular_selecao_historico(evento)
+
+            # Atualiza o painel de controle com os dados mais recentes
+            self.painel_controle.atualizar_historico(
+                self.area_desenho.obter_historico(), 
+                self.area_desenho.obter_indice_selecionado()
+            )
             
             self.ui_manager.update(delta_time)
             
+            # Desenha tudo
             self.area_desenho.desenhar(self.tela)
             pygame.draw.rect(self.tela, COR_PAINEL, (LARGURA_CANVAS, 0, LARGURA_PAINEL, ALTURA_TOTAL))
             self.ui_manager.draw_ui(self.tela)
@@ -79,10 +65,29 @@ class Aplicacao:
 
         pygame.quit()
 
+    def manipular_selecao_historico(self, evento):
+        """Lida com a seleção de um item na lista de histórico."""
+        item_selecionado = evento.text
+        if not item_selecionado:
+            self.area_desenho.selecionar_desenho(None)
+            return
+
+        # Extrai o índice do texto (ex: "1. Linha" -> 0)
+        try:
+            # Remove o prefixo de seleção '*' se houver
+            if item_selecionado.startswith('* '):
+                item_selecionado = item_selecionado[2:]
+            
+            indice_str = item_selecionado.split('.')[0]
+            indice = int(indice_str) - 1
+            self.area_desenho.selecionar_desenho(indice)
+        except (ValueError, IndexError):
+            print(f"Erro ao parsear o índice do histórico: {item_selecionado}")
+            self.area_desenho.selecionar_desenho(None)
+
     def manipular_eventos_ui(self, evento):
         painel = self.painel_controle
         
-        # Botão de Resolução
         if evento.ui_element == painel.botao_aplicar_res:
             try:
                 nova_largura = int(painel.entrada_largura.get_text())
@@ -90,8 +95,6 @@ class Aplicacao:
                 self.area_desenho.atualizar_resolucao_grid(nova_largura, nova_altura)
             except ValueError:
                 print("Erro: A resolução deve ser um número inteiro.")
-        
-        # Botões de Desenho
         
         elif evento.ui_element == painel.elementos_linha.get('botao'):
             try:
@@ -147,16 +150,8 @@ class Aplicacao:
             
         elif evento.ui_element == painel.botao_desfazer:
             self.area_desenho.desfazer_ultimo_desenho()
-                        
-        elif evento.ui_element == painel.botao_limpar:
-            self.area_desenho.limpar_pixels()
-        else:
-            # Verifica se é um botão de exclusão do histórico
-            if hasattr(painel, '_historico_itens'):
-                for item in painel._historico_itens:
-                    for w in item.get('widgets', []):
-                        if isinstance(w, pygame_gui.elements.UIButton) and evento.ui_element == w:
-                            indice_real = getattr(w, 'indice_historico_real', None)
-                            if indice_real is not None:
-                                self.area_desenho.remover_desenho_indice(indice_real)
-                            return
+
+        elif evento.ui_element == painel.botao_excluir_selecao:
+            indice = self.area_desenho.obter_indice_selecionado()
+            if indice is not None:
+                self.area_desenho.remover_desenho_indice(indice)

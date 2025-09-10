@@ -14,9 +14,8 @@ class PainelControle:
         self.elementos_circulo = {}
         self.elementos_bezier = {}
         self.elementos_elipse = {}
-
+        
         self._historico_cache_str = None
-        self._historico_itens = []
 
         self.construir_interface()
         self.mostrar_elementos_figura('Linha (Bresenham)')
@@ -29,25 +28,22 @@ class PainelControle:
         self.altura_historico = 260
         self.posicao_x_historico = self.largura_canvas + self.largura_painel - self.largura_historico - margem_direita
 
-        self.historico_panel = pygame_gui.elements.UIPanel(
-            relative_rect=pygame.Rect((self.posicao_x_historico, 10), (self.largura_historico, self.altura_historico)),
-            manager=self.ui_manager,
-            object_id='#painel_historico'
-        )
-
-        self.historico_titulo = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((0, 2), (self.largura_historico, 20)),
+        pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.posicao_x_historico, 10), (self.largura_historico, 20)),
             text='Histórico de Desenhos',
-            manager=self.ui_manager,
-            container=self.historico_panel
+            manager=self.ui_manager
         )
-
-        self.historico_container = pygame_gui.elements.UIScrollingContainer(
-            relative_rect=pygame.Rect((0, 24), (self.largura_historico, self.altura_historico - 30)),
+        self.lista_historico = pygame_gui.elements.UISelectionList(
+            relative_rect=pygame.Rect((self.posicao_x_historico, 40), (self.largura_historico, self.altura_historico - 50)),
+            item_list=[],
             manager=self.ui_manager,
-            container=self.historico_panel,
-            allow_scroll_x=False,
-            allow_scroll_y=True
+            object_id='#lista_historico'
+        )
+        self.botao_excluir_selecao = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.posicao_x_historico, self.altura_historico), (self.largura_historico, 30)),
+            text='Excluir Seleção',
+            manager=self.ui_manager,
+            object_id='#botao_excluir_selecao'
         )
 
         # Configuração de grade
@@ -208,82 +204,17 @@ class PainelControle:
             comp.show()
 
     # ---------------- Histórico -----------------
-    def atualizar_historico(self, historico):
-        # cache simples
-        assinatura = f"{len(historico)}:" + '|'.join(d.timestamp.isoformat() for d in historico)
-        if assinatura == self._historico_cache_str:
+    def atualizar_historico(self, historico, indice_selecionado):
+        assinatura_desenhos = '|'.join(str(d.timestamp) for d in historico)
+        assinatura_completa = f"{len(historico)}:{indice_selecionado}:{assinatura_desenhos}"
+
+        if self._historico_cache_str == assinatura_completa:
             return
-        self._historico_cache_str = assinatura
-
-        # limpar antigo
-        for item in self._historico_itens:
-            for w in item.get('widgets', []):
-                w.kill()
-        self._historico_itens.clear()
-
-        viewport_w = self.historico_container.relative_rect.width
-        linha_h = 24
-        padding_block = 6
-        botao_w = 20
-        gap = 2
-        text_x = botao_w + gap  # texto logo após botão
-        text_w = viewport_w - text_x
-        y = 0
-
-        if not historico:
-            vazio = pygame_gui.elements.UILabel(
-                relative_rect=pygame.Rect((0, y), (viewport_w, linha_h)),
-                text='(nenhum desenho)', manager=self.ui_manager, container=self.historico_container
-            )
-            self._historico_itens.append({'widgets': [vazio]})
-            self.historico_container.set_scrollable_area_dimensions((viewport_w, linha_h + 4))
-            return
-
-        for idx_visual, desenho in enumerate(reversed(historico)):
-            indice_real = len(historico) - 1 - idx_visual
-            widgets = []
-            botao = pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect((0, y), (botao_w, linha_h)),
-                text='X', manager=self.ui_manager, container=self.historico_container,
-                object_id=f'#hist_x_{idx_visual}'
-            )
-            botao.indice_historico_real = indice_real
-            titulo = pygame_gui.elements.UILabel(
-                relative_rect=pygame.Rect((text_x, y), (text_w, linha_h)),
-                text=f"{idx_visual+1}. {desenho.tipo}", manager=self.ui_manager, container=self.historico_container
-            )
-            widgets.extend([botao, titulo])
-            y += linha_h
-
-            if desenho.tipo == 'Linha (Bresenham)':
-                p1 = desenho.parametros.get('p1'); p2 = desenho.parametros.get('p2')
-                linhas = [f"P1: {p1}", f"P2: {p2}"]
-            elif desenho.tipo == 'Círculo':
-                c = desenho.parametros.get('centro'); r = desenho.parametros.get('raio')
-                linhas = [f"Centro: {c}", f"Raio: {r}"]
-            elif desenho.tipo == 'Curva de Bézier':
-                linhas = [f"P{i}: {desenho.parametros.get(f'p{i}')}" for i in range(4)]
-            elif desenho.tipo == 'Elipse':
-                c = desenho.parametros.get('centro'); rx = desenho.parametros.get('rx'); ry = desenho.parametros.get('ry')
-                linhas = [f"Centro: {c}", f"RX: {rx}", f"RY: {ry}"]
-            else:
-                linhas = []
-
-            for linha in linhas:
-                lbl = pygame_gui.elements.UILabel(
-                    relative_rect=pygame.Rect((text_x, y), (text_w, linha_h)),
-                    text=linha, manager=self.ui_manager, container=self.historico_container
-                )
-                widgets.append(lbl)
-                y += linha_h
-
-            hora_lbl = pygame_gui.elements.UILabel(
-                relative_rect=pygame.Rect((text_x, y), (text_w, linha_h)),
-                text=f"Hora: {desenho.timestamp.strftime('%H:%M:%S')}", manager=self.ui_manager, container=self.historico_container
-            )
-            widgets.append(hora_lbl)
-            y += linha_h + padding_block
-            self._historico_itens.append({'widgets': widgets, 'indice': indice_real})
-
-        altura_total = max(y, self.altura_historico - 30)
-        self.historico_container.set_scrollable_area_dimensions((viewport_w, altura_total))
+        self._historico_cache_str = assinatura_completa
+        
+        lista_para_ui = []
+        for i, desenho in enumerate(historico):
+            prefixo = "* " if i == indice_selecionado else ""
+            lista_para_ui.append(f"{prefixo}{i+1}. {desenho.tipo}")
+        
+        self.lista_historico.set_item_list(lista_para_ui)

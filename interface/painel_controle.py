@@ -16,6 +16,7 @@ class PainelControle:
         self.elementos_elipse = {}
         self.elementos_polilinha = {}
         self.elementos_triangulo = {}
+        self.elementos_quadrilatero = {}
         self.elementos_transformacao = {}
 
         # Cache do histórico
@@ -92,7 +93,7 @@ class PainelControle:
             manager=self.ui_manager
         )
         self.seletor_figura = pygame_gui.elements.UIDropDownMenu(
-            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha', 'Triângulo'],
+            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha', 'Triângulo', 'Quadrilátero'],
             starting_option='Linha (Bresenham)',
             relative_rect=pygame.Rect((self.largura_canvas + 10, 210), (180, 30)),
             manager=self.ui_manager
@@ -198,6 +199,50 @@ class PainelControle:
         self.elementos_polilinha['entrada_pontos'].set_text('-10,-10; 0,20; 10,-10; 20,20')
         self.elementos_polilinha['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 70), (210, 40)), text='Desenhar Polilinha', manager=self.ui_manager, object_id='#botao_polilinha')
 
+        # --- Quadrilátero (por 4 pontos) ---
+        self.elementos_quadrilatero['label_p1'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (30, 20)), text='P1:', manager=self.ui_manager)
+        self.elementos_quadrilatero['p1_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y), (50, 30)), manager=self.ui_manager)
+        self.elementos_quadrilatero['p1_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y), (50, 30)), manager=self.ui_manager)
+        self.elementos_quadrilatero['btn_p1'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y), (40, 30)), text='Def', manager=self.ui_manager, object_id='#quad_set_p1')
+
+        self.elementos_quadrilatero['label_p2'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 40), (30, 20)), text='P2:', manager=self.ui_manager)
+        self.elementos_quadrilatero['p2_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y + 40), (50, 30)), manager=self.ui_manager)
+        self.elementos_quadrilatero['p2_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 40), (50, 30)), manager=self.ui_manager)
+        self.elementos_quadrilatero['btn_p2'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 40), (40, 30)), text='Def', manager=self.ui_manager, object_id='#quad_set_p2')
+
+        self.elementos_quadrilatero['label_p3'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (30, 20)), text='P3:', manager=self.ui_manager)
+        self.elementos_quadrilatero['p3_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y + 80), (50, 30)), manager=self.ui_manager)
+        self.elementos_quadrilatero['p3_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 80), (50, 30)), manager=self.ui_manager)
+        self.elementos_quadrilatero['btn_p3'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 80), (40, 30)), text='Def', manager=self.ui_manager, object_id='#quad_set_p3')
+
+        self.elementos_quadrilatero['label_p4'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 120), (30, 20)), text='P4:', manager=self.ui_manager)
+        self.elementos_quadrilatero['p4_x'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 40, base_y + 120), (50, 30)), manager=self.ui_manager)
+        self.elementos_quadrilatero['p4_y'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((self.largura_canvas + 95, base_y + 120), (50, 30)), manager=self.ui_manager)
+        self.elementos_quadrilatero['btn_p4'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 150, base_y + 120), (40, 30)), text='Def', manager=self.ui_manager, object_id='#quad_set_p4')
+
+        self.elementos_quadrilatero['botao'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 160), (180, 40)),
+            text='Desenhar Quadrilátero', manager=self.ui_manager, object_id='#botao_quadrilatero')
+
+        for k, v in [('p1_x','-20'),('p1_y','-20'),('p2_x','20'),('p2_y','-20'),('p3_x','20'),('p3_y','20'),('p4_x','-20'),('p4_y','20')]:
+            self.elementos_quadrilatero[k].set_text(v)
+
         # --- Transformações 2D ---
         base_y_transf = 500
         pygame_gui.elements.UILabel(
@@ -267,7 +312,7 @@ class PainelControle:
             text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
 
     def mostrar_elementos_figura(self, figura):
-        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo]:
+        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo, self.elementos_quadrilatero]:
             for comp in grupo.values():
                 comp.hide()
         mapping = {
@@ -276,7 +321,8 @@ class PainelControle:
             'Curva de Bézier': self.elementos_bezier,
             'Elipse': self.elementos_elipse,
             'Polilinha': self.elementos_polilinha,
-            'Triângulo': self.elementos_triangulo
+            'Triângulo': self.elementos_triangulo,
+            'Quadrilátero': self.elementos_quadrilatero
         }.get(figura, {})
         for comp in mapping.values():
             comp.show()

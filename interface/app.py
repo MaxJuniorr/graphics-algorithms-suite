@@ -131,6 +131,9 @@ class Aplicacao:
         elif tipo_figura == 'triangulo':
             self.painel_controle.elementos_triangulo[f'{ponto}_x'].set_text(x_str)
             self.painel_controle.elementos_triangulo[f'{ponto}_y'].set_text(y_str)
+        elif tipo_figura == 'quadrilatero':
+            self.painel_controle.elementos_quadrilatero[f'{ponto}_x'].set_text(x_str)
+            self.painel_controle.elementos_quadrilatero[f'{ponto}_y'].set_text(y_str)
 
     def manipular_selecao_historico(self, evento):
         item_selecionado = evento.text
@@ -181,6 +184,16 @@ class Aplicacao:
                 self.area_desenho.adicionar_forma("Polilinha", { 'pontos': pts })
             except ValueError:
                 print("Erro: As coordenadas do triângulo devem ser números inteiros.")
+        elif evento.ui_element == painel.elementos_quadrilatero.get('botao'):
+            try:
+                p1 = (int(painel.elementos_quadrilatero['p1_x'].get_text()), int(painel.elementos_quadrilatero['p1_y'].get_text()))
+                p2 = (int(painel.elementos_quadrilatero['p2_x'].get_text()), int(painel.elementos_quadrilatero['p2_y'].get_text()))
+                p3 = (int(painel.elementos_quadrilatero['p3_x'].get_text()), int(painel.elementos_quadrilatero['p3_y'].get_text()))
+                p4 = (int(painel.elementos_quadrilatero['p4_x'].get_text()), int(painel.elementos_quadrilatero['p4_y'].get_text()))
+                pts = [p1, p2, p3, p4, p1]
+                self.area_desenho.adicionar_forma("Polilinha", { 'pontos': pts })
+            except ValueError:
+                print("Erro: As coordenadas do quadrilátero devem ser números inteiros.")
         elif evento.ui_element == painel.elementos_polilinha.get('botao'):
             try:
                 pontos_str = [p.strip() for p in painel.elementos_polilinha['entrada_pontos'].get_text().split(';')]
@@ -322,6 +335,14 @@ class Aplicacao:
                 painel.elementos_triangulo.get('btn_p3'): 'p3',
             }
             self.proximo_clique_define = ('triangulo', btn_map[evento.ui_element])
+        elif evento.ui_element in [painel.elementos_quadrilatero.get(k) for k in ['btn_p1','btn_p2','btn_p3','btn_p4']]:
+            btn_map_q = {
+                painel.elementos_quadrilatero.get('btn_p1'): 'p1',
+                painel.elementos_quadrilatero.get('btn_p2'): 'p2',
+                painel.elementos_quadrilatero.get('btn_p3'): 'p3',
+                painel.elementos_quadrilatero.get('btn_p4'): 'p4',
+            }
+            self.proximo_clique_define = ('quadrilatero', btn_map_q[evento.ui_element])
         elif evento.ui_element == painel.botao_limpar: self.area_desenho.limpar_pixels()
         elif evento.ui_element == painel.botao_desfazer: self.area_desenho.desfazer_ultimo_desenho()
         elif evento.ui_element == painel.botao_excluir_selecao:

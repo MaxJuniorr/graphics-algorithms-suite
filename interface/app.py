@@ -7,7 +7,7 @@ from algoritmos.bresenham import calcular_linha_bresenham
 from algoritmos.circulo_elipse import calcular_circulo, calcular_elipse
 from algoritmos.curvas_bezier import rasterizar_curva_bezier
 from algoritmos.polilinha import rasterizar_polilinha
-from algoritmos.preenchimento import preencher_scanline
+from algoritmos.preenchimento import preencher_scanline, preencher_recursao, preencher_flood_canvas
 import algoritmos.transformacoes as transform
 
 # --- Constantes de Layout ---
@@ -181,6 +181,28 @@ class Aplicacao:
         elif tipo_figura == 'pentagono':
             self.painel_controle.elementos_pentagono[f'{ponto}_x'].set_text(x_str)
             self.painel_controle.elementos_pentagono[f'{ponto}_y'].set_text(y_str)
+        elif tipo_figura == 'hexagono':
+            self.painel_controle.elementos_hexagono[f'{ponto}_x'].set_text(x_str)
+            self.painel_controle.elementos_hexagono[f'{ponto}_y'].set_text(y_str)
+        elif tipo_figura == 'flood':
+            # Flood fill livre no canvas: preenche região vazia conectada à seed
+            seed = (coords[0], coords[1])
+            historico = self.area_desenho.obter_historico()
+            ocupados = set()
+            for d in historico:
+                pixels = self.area_desenho.rasterizar_desenho(d)
+                for p in pixels:
+                    ocupados.add(tuple(p))
+            # Limites do grid (em coords de grade)
+            min_x = - (self.area_desenho.largura_grid // 2)
+            max_x = (self.area_desenho.largura_grid // 2)
+            min_y = - (self.area_desenho.altura_grid // 2)
+            max_y = (self.area_desenho.altura_grid // 2)
+            preenchidos = preencher_flood_canvas(ocupados, seed, (min_x, max_x, min_y, max_y))
+            if not preenchidos:
+                print("Nada a preencher (seed inválida ou célula já ocupada).")
+                return
+            self.area_desenho.adicionar_forma("Pontos", { 'pontos': preenchidos })
         elif tipo_figura == 'hexagono':
             self.painel_controle.elementos_hexagono[f'{ponto}_x'].set_text(x_str)
             self.painel_controle.elementos_hexagono[f'{ponto}_y'].set_text(y_str)
@@ -369,15 +391,15 @@ class Aplicacao:
                     self._atualizar_vertices_desenho(desenho, novos_pontos)
             except ValueError: print("Erro nos parâmetros de rotação.")
 
-        elif evento.ui_element == painel.elementos_transformacao.get('btn_preencher'):
-            # Preenche polígono via Scanline. Agora suporta Polilinha, Círculo e Elipse.
+        elif evento.ui_element == painel.elementos_transformacao.get('btn_preencher_scan'):
+            # Preenche via Scanline: suporta Polilinha, Círculo e Elipse.
             indice_selecionado = self.area_desenho.obter_indice_selecionado()
             if indice_selecionado is None:
                 print("Nenhum objeto selecionado.")
                 return
             desenho = self.area_desenho.obter_historico()[indice_selecionado]
             if desenho.tipo not in ["Polilinha", "Círculo", "Elipse"]:
-                print("Preenchimento disponível para Polilinha, Círculo e Elipse.")
+                print("Scanline disponível para Polilinha, Círculo e Elipse.")
                 return
             vertices = self._vertices_para_preenchimento(desenho)
             if len(vertices) < 3:
@@ -388,6 +410,11 @@ class Aplicacao:
                 print("Nada a preencher (verifique se o polígono é simples/fechado).")
                 return
             self.area_desenho.adicionar_forma("Pontos", { 'pontos': pixels })
+
+        elif evento.ui_element == painel.elementos_transformacao.get('btn_preencher_rec'):
+            # Ativa modo seed por clique para Flood Fill
+            print("Clique no canvas para definir a seed do Flood Fill (área vazia).")
+            self.proximo_clique_define = ('flood', None)
 
         # --- Botões de Definição e Ações Gerais ---
         elif evento.ui_element in [painel.elementos_linha.get(k) for k in ['btn_p1', 'btn_p2']]:

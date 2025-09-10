@@ -384,22 +384,39 @@ class PainelControle:
             manager=self.ui_manager
         )
         self.elementos_transformacao['btn_rot'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 260, y_offset), (60, 60)),
+            relative_rect=pygame.Rect((self.largura_canvas + 260, y_offset), (60, 30)),
             text='Aplicar', manager=self.ui_manager, object_id='#rot_aplicar'
         )
         self.elementos_transformacao['rot_angulo'].set_text('45')
         self.elementos_transformacao['rot_px'].set_text('0')
         self.elementos_transformacao['rot_py'].set_text('0')
 
-        # Preenchimento (Scanline)
-        y_offset = base_y_transf + 210
+        # Preenchimento (alinhado conforme solicitado)
+        # Título "Preenchimento:" ao lado direito de Desfazer
+        desf_x, desf_y, desf_w, desf_h = (self.largura_canvas + 10), (self.altura_total - 90), 180, 35
+        limpar_x, limpar_y, limpar_w, limpar_h = (self.largura_canvas + 10), (self.altura_total - 50), 180, 35
+        gap = 10
+        label_x = desf_x + desf_w + gap
+        label_y = desf_y
         self.elementos_transformacao['label_preench'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset), (180, 20)),
-            text='Preenchimento (Scanline):', manager=self.ui_manager
+            relative_rect=pygame.Rect((label_x, label_y), (180, 20)),
+            text='Preenchimento:', manager=self.ui_manager
         )
-        self.elementos_transformacao['btn_preencher'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 200, y_offset - 5), (120, 30)),
-            text='Preencher', manager=self.ui_manager, object_id='#preencher_scanline'
+        # Dois botões (mesma linha do label): Scanline e Recursão
+        # Botão de Scanline ao lado direito de Limpar Tela; Flood Fill ao lado direito de Scanline
+        btn_w, btn_h = 95, 35
+        scan_x = limpar_x + limpar_w + gap
+        flood_x = scan_x + btn_w + gap
+        scan_y = limpar_y
+        flood_y = limpar_y
+
+        self.elementos_transformacao['btn_preencher_scan'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((scan_x, scan_y), (btn_w, btn_h)),
+            text='Scanline', manager=self.ui_manager, object_id='#preencher_scanline'
+        )
+        self.elementos_transformacao['btn_preencher_rec'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((flood_x, flood_y), (btn_w, btn_h)),
+            text='Flood Fill', manager=self.ui_manager, object_id='#preencher_recursao'
         )
 
         # Ações gerais

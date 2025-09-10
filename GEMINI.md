@@ -1,38 +1,46 @@
 # Visão Geral do Projeto
 
-Este é um aplicativo de desktop em Python projetado como uma suíte para aprender e visualizar algoritmos clássicos de computação gráfica. A interface permite que os usuários ajustem parâmetros, executem algoritmos e vejam os resultados renderizados em tempo real em uma tela baseada em grade.
+Este é um aplicativo de desktop em Python, desenvolvido como uma suíte para aprendizado e visualização de algoritmos clássicos de computação gráfica. A interface, construída com **Pygame** e **Pygame_GUI**, permite que os usuários selecionem algoritmos, ajustem parâmetros geométricos e vejam os resultados renderizados em tempo real em uma tela baseada em grade.
 
-A aplicação usa **Pygame** para a janela principal e o desenho, e **Pygame_GUI** para o painel de controle interativo.
+O projeto foi estruturado com foco em **modularidade**, separando claramente a lógica dos algoritmos, o gerenciamento da interface e as utilidades de suporte.
 
 ---
 
 # Arquitetura e Componentes
 
-A aplicação é dividida em três componentes principais: a **Interface**, os **Algoritmos** e as **Utilitários**.
+A aplicação é dividida em três pacotes principais: `interface`, `algoritmos` e `utils`.
 
 ### 1. Interface (`interface/`)
 
-Este pacote gerencia toda a experiência do usuário.
+Responsável por toda a experiência do usuário. A lógica da UI é distribuída em componentes especializados:
 
-- **`app.py`**: Contém a classe principal `Aplicacao`, que inicializa o Pygame, gerencia o loop de eventos principal, processa a entrada do usuário e coordena o desenho na tela.
-- **Painel de Controle**: Construído dentro de `app.py`, o painel é dividido em seções:
-    - **Configuração da Grade**: Entradas para `Largura` e `Altura` da grade de pixels, com um botão "Aplicar Resolução".
-    - **Bresenham (Linha)**: Entradas para as coordenadas (x, y) de dois pontos (P1 e P2) e um botão "Desenhar Linha".
-    - **Ponto Médio (Círculo)**: Entradas para as coordenadas do `Centro` (x, y) e o `Raio`, com um botão "Desenhar Círculo".
-    - **Ações Gerais**: Um botão "Limpar Tela" para limpar os pixels desenhados.
-- **Área de Desenho**: Uma superfície do Pygame onde uma grade é desenhada. Os algoritmos não desenham pixels diretamente; em vez disso, eles retornam uma lista de coordenadas `(x, y)` que a classe `Aplicacao` então renderiza na grade.
+- **`app.py` (`Aplicacao`)**: É o coração da aplicação. Orquestra os outros componentes, gerencia o loop de eventos principal do Pygame, processa eventos da UI e coordena as atualizações entre o painel de controle e a área de desenho.
+
+- **`area_desenho.py` (`AreaDesenho`)**: Gerencia a "tela" onde os algoritmos são visualizados. Suas responsabilidades são:
+    - Desenhar a grade de fundo.
+    - Mapear as coordenadas da grade (ex: 1, 2) para as coordenadas da tela em pixels.
+    - Renderizar os pixels retornados pelos algoritmos.
+    - Gerenciar o estado dos desenhos através da classe `Historico`, permitindo que formas sejam destacadas, removidas ou que ações sejam desfeitas.
+
+- **`painel_controle.py` (`PainelControle`)**: Constrói e gerencia todos os widgets do painel lateral. A interface é dividida em seções lógicas:
+    - **Configuração da Grade**: Entradas para a resolução da grade (`Largura`, `Altura`).
+    - **Seleção de Figura**: Um menu dropdown para alternar entre os algoritmos disponíveis (`Linha`, `Círculo`, `Elipse`, `Curva de Bézier`). A seleção aqui controla quais campos de entrada são exibidos abaixo.
+    - **Parâmetros de Algoritmos**: Campos de texto que aparecem dinamicamente para inserir os parâmetros necessários para o algoritmo selecionado (coordenadas de pontos, raios, etc.).
+    - **Histórico de Desenhos**: Uma lista que exibe cada forma desenhada. Clicar em um item o seleciona e o destaca na área de desenho.
+    - **Ações Gerais**: Botões para `Limpar Tela`, `Desfazer` a última ação e `Excluir` a forma selecionada no histórico.
 
 ### 2. Algoritmos (`algoritmos/`)
 
-Este pacote contém a lógica pura para cada algoritmo gráfico. Cada arquivo implementa uma função que recebe parâmetros geométricos (pontos, raio, etc.) e retorna uma lista de tuplas de coordenadas `(x, y)` para desenhar.
+Contém a lógica pura e matemática de cada algoritmo. As funções neste pacote são independentes da interface e do Pygame. Elas recebem parâmetros numéricos e retornam uma lista de tuplas de coordenadas `(x, y)` que representam os pixels a serem desenhados.
 
 **Algoritmos Implementados:**
-- **`bresenham.py`**:
-    - `calcular_linha_bresenham(ponto_inicial, ponto_final)`: Retorna os pixels para uma linha entre dois pontos.
-- **`circulo_elipse.py`**:
-    - `calcular_circulo(centro, raio)`: Retorna os pixels para um círculo usando o algoritmo do ponto médio.
-- **`curvas_bezier.py`**:
-    - `rasterizar_curva_bezier(p0, p1, p2, p3, num_segmentos)`: Calcula os pontos de uma curva de Bézier cúbica e os conecta usando o algoritmo de Bresenham para rasterização.
+- **`bresenham.py`**: `calcular_linha_bresenham(p1, p2)`
+    - Implementa o algoritmo de Bresenham para rasterizar uma linha entre dois pontos com coordenadas inteiras.
+- **`circulo_elipse.py`**: 
+    - `calcular_circulo(centro, raio)`: Implementa o algoritmo do Ponto Médio para desenhar um círculo.
+    - `calcular_elipse(centro, rx, ry)`: Implementa o algoritmo do Ponto Médio para desenhar uma elipse a partir de um centro e dois raios (rx e ry).
+- **`curvas_bezier.py`**: `rasterizar_curva_bezier(p0, p1, p2, p3)`
+    - Calcula os pontos de uma curva de Bézier cúbica usando a definição paramétrica e, em seguida, utiliza o algoritmo de Bresenham para conectar esses pontos, efetivamente rasterizando a curva.
 
 **Algoritmos Planejados (Arquivos Vazios):**
 - `preenchimento.py`
@@ -42,41 +50,36 @@ Este pacote contém a lógica pura para cada algoritmo gráfico. Cada arquivo im
 
 ### 3. Utilitários (`utils/`)
 
-- **`geometria.py`**: (Atualmente vazio) Destinado a conter funções auxiliares de geometria, como cálculos de distância, manipulação de vetores, etc.
+- **`historico.py`**: Fornece a espinha dorsal para o gerenciamento de estado.
+    - `DesenhoHistorico` (dataclass): Estrutura que armazena os dados de uma única forma desenhada: seu tipo (ex: "Círculo"), os parâmetros usados, a lista de pixels e um timestamp.
+    - `Historico` (classe): Gerencia uma lista de objetos `DesenhoHistorico`. Expõe métodos para adicionar, remover, limpar e desfazer desenhos, que são consumidos pela `AreaDesenho`.
+- **`geometria.py`**: (Vazio) Destinado a futuras funções auxiliares de geometria (cálculos de distância, vetores, etc.).
 
 ---
 
-# Como Usar
+# Fluxo de Interação
 
-### 1. Instalar Dependências
+O fluxo de dados, desde a entrada do usuário até a renderização, ocorre da seguinte forma:
 
-Certifique-se de ter Python instalado. Em seguida, instale as bibliotecas necessárias:
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Executar a Aplicação
-
-Para iniciar o programa, execute o script `main.py` na raiz do projeto:
-```bash
-python main.py
-```
+1.  O usuário insere valores nos campos do `PainelControle` (ex: coordenadas da linha) e clica no botão "Desenhar".
+2.  O `Aplicacao` detecta o evento `UI_BUTTON_PRESSED` no seu loop principal.
+3.  Ele identifica qual botão foi pressionado e lê os valores dos campos de texto correspondentes no `PainelControle`.
+4.  Chama a função apropriada do pacote `algoritmos/` (ex: `calcular_linha_bresenham`), passando os valores lidos.
+5.  A função do algoritmo processa os dados e retorna uma lista de pixels `[(x1, y1), (x2, y2), ...]`, sem saber nada sobre a tela.
+6.  O `Aplicacao` recebe essa lista e a repassa para a `AreaDesenho`.
+7.  A `AreaDesenho` adiciona os pixels a um novo `DesenhoHistorico` em sua instância da classe `Historico`.
+8.  No próximo ciclo de desenho, a `AreaDesenho` lê o histórico completo e renderiza todos os pixels na tela, traduzindo as coordenadas da grade para as posições corretas na janela.
 
 ---
 
-# Convenções de Desenvolvimento
+# Como Adicionar um Novo Algoritmo
 
-- **Modularidade**: A lógica do algoritmo é estritamente separada da lógica da interface. Funções de algoritmo nunca devem interagir diretamente com o Pygame.
-- **Coordenadas**: Os algoritmos operam em um sistema de coordenadas de grade. A classe `Aplicacao` é responsável por traduzir essas coordenadas de grade para as posições de pixel na tela.
-- **Idioma**: Comentários de código, nomes de variáveis e texto da interface estão em português.
-- **Docstrings**: As funções dos algoritmos incluem docstrings explicando seu propósito, argumentos e o que retornam.
-
-### Como Adicionar um Novo Algoritmo
-
-1.  **Criar a Lógica**: Crie um novo arquivo em `algoritmos/` (ex: `meu_algoritmo.py`). Nele, defina uma função que receba os parâmetros necessários e retorne uma lista de pixels `[(x1, y1), (x2, y2), ...]`.
-2.  **Integrar na Interface**:
-    - Em `interface/app.py`, importe sua nova função: `from algoritmos.meu_algoritmo import minha_funcao`.
-    - Na função `construir_interface`, adicione os elementos de UI necessários (entradas de texto, botões) para o seu algoritmo.
-3.  **Adicionar o Gatilho do Evento**:
-    - Na função `executar`, adicione um `elif` ao bloco de manipulação de eventos `pygame_gui.UI_BUTTON_PRESSED`.
-    - Neste bloco, leia os valores das suas novas entradas de UI, chame sua função de algoritmo com esses valores e adicione os pixels retornados à lista `self.pixels_a_desenhar`.
+1.  **Criar a Lógica**: Crie um novo arquivo em `algoritmos/` (ex: `meu_algoritmo.py`). Nele, defina uma função que receba os parâmetros necessários e retorne uma lista de pixels `[(x1, y1), (x2, y2), ...]`. Inclua uma docstring explicando seu funcionamento.
+2.  **Integrar na Interface (`painel_controle.py`)**:
+    - Adicione o nome do seu algoritmo à lista de opções do `UIDropDownMenu`.
+    - Crie os widgets (labels, campos de texto, botão) para os parâmetros do seu algoritmo, agrupando-os em um dicionário (ex: `self.elementos_meu_algoritmo`).
+    - Adicione seu novo dicionário de elementos ao mapeamento no método `mostrar_elementos_figura` para que a UI possa exibi-los.
+3.  **Adicionar o Gatilho do Evento (`app.py`)**:
+    - Importe sua nova função: `from algoritmos.meu_algoritmo import minha_funcao`.
+    - No método `manipular_eventos_ui`, adicione um novo bloco `elif` para o evento de clique do seu novo botão.
+    - Neste bloco, leia os valores das suas entradas de UI, chame sua função de algoritmo e passe o resultado para `self.area_desenho.adicionar_pixels()`.

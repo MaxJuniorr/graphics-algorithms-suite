@@ -14,6 +14,7 @@ class PainelControle:
         self.elementos_circulo = {}
         self.elementos_bezier = {}
         self.elementos_elipse = {}
+        self.elementos_polilinha = {}
         
         self._historico_cache_str = None
 
@@ -85,7 +86,7 @@ class PainelControle:
             manager=self.ui_manager
         )
         self.seletor_figura = pygame_gui.elements.UIDropDownMenu(
-            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse'],
+            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha'],
             starting_option='Linha (Bresenham)',
             relative_rect=pygame.Rect((self.largura_canvas + 10, 210), (180, 30)),
             manager=self.ui_manager
@@ -142,6 +143,12 @@ class PainelControle:
         for k,v in [('centro_x','0'),('centro_y','0'),('rx','30'),('ry','20')]: self.elementos_elipse[k].set_text(v)
         self.elementos_elipse['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (210, 40)), text='Desenhar Elipse', manager=self.ui_manager, object_id='#botao_elipse')
 
+        # --- Polilinha ---
+        self.elementos_polilinha['label'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (220, 20)), text='Pontos (x1,y1; x2,y2; ...):', manager=self.ui_manager)
+        self.elementos_polilinha['entrada_pontos'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 30), (210, 30)), manager=self.ui_manager)
+        self.elementos_polilinha['entrada_pontos'].set_text('-10,-10; 0,20; 10,-10; 20,20')
+        self.elementos_polilinha['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 70), (210, 40)), text='Desenhar Polilinha', manager=self.ui_manager, object_id='#botao_polilinha')
+
 
         # Ações gerais
         self.botao_desfazer = pygame_gui.elements.UIButton(
@@ -153,14 +160,15 @@ class PainelControle:
 
     # ---------------- Visibilidade -----------------
     def mostrar_elementos_figura(self, figura):
-        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse]:
+        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha]:
             for comp in grupo.values():
                 comp.hide()
         mapping = {
             'Linha (Bresenham)': self.elementos_linha,
             'Círculo': self.elementos_circulo,
             'Curva de Bézier': self.elementos_bezier,
-            'Elipse': self.elementos_elipse
+            'Elipse': self.elementos_elipse,
+            'Polilinha': self.elementos_polilinha
         }.get(figura, {})
         for comp in mapping.values():
             comp.show()

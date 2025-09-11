@@ -148,12 +148,13 @@ class Aplicacao:
                             self.clip_poly_pontos = []
                             self.area_desenho.limpar_preview_clip_poligono()
             self.painel_controle.atualizar_historico(self.area_desenho.obter_historico(), self.area_desenho.obter_indice_selecionado())
-            # Atualiza a janela de recorte (retângulo vermelho) a cada frame para linhas
+            # Atualiza a janela de recorte (retângulo vermelho ou polígono) a cada frame
             try:
                 idx = self.area_desenho.obter_indice_selecionado()
                 if idx is not None:
                     d = self.area_desenho.obter_historico()[idx]
                     if d.tipo == "Linha (Bresenham)":
+                        self.area_desenho.limpar_preview_clip_poligono()
                         left = int(self.painel_controle.elementos_recorte['left'].get_text())
                         bottom = int(self.painel_controle.elementos_recorte['bottom'].get_text())
                         right = int(self.painel_controle.elementos_recorte['right'].get_text())
@@ -161,13 +162,23 @@ class Aplicacao:
                         xmin, xmax = sorted([left, right])
                         ymin, ymax = sorted([bottom, top])
                         self.area_desenho.definir_janela_recorte((xmin, ymin, xmax, ymax))
+                    elif d.tipo == "Polilinha":
+                        self.area_desenho.limpar_janela_recorte()
+                        if not self.clip_poly_capturando:
+                            pts_str = [p.strip() for p in self.painel_controle.elementos_recorte['entrada_clip_pontos'].get_text().split(';')]
+                            pts = [tuple(map(int, p.split(','))) for p in pts_str if p]
+                            self.area_desenho.definir_preview_clip_poligono(pts if len(pts) >= 2 else None)
+                            self.clip_poly_pontos = pts
                     else:
                         self.area_desenho.limpar_janela_recorte()
+                        self.area_desenho.limpar_preview_clip_poligono()
                 else:
                     self.area_desenho.limpar_janela_recorte()
+                    self.area_desenho.limpar_preview_clip_poligono()
             except Exception:
                 # Em caso de valores inválidos, não desenha a janela nesse frame
                 self.area_desenho.limpar_janela_recorte()
+                self.area_desenho.limpar_preview_clip_poligono()
             self.ui_manager.update(delta_time)
             self.area_desenho.desenhar(self.tela)
             pygame.draw.rect(self.tela, COR_PAINEL, (LARGURA_CANVAS, 0, LARGURA_PAINEL, ALTURA_TOTAL))
@@ -427,16 +438,6 @@ class Aplicacao:
             print("Clique no canvas para definir os vértices da janela (convexa). Clique em 'Finalizar' para aplicar.")
         elif evento.ui_element == painel.elementos_recorte.get('btn_clip_finalizar'):
             # Finaliza captura e aplica recorte se convexa
-            # Caso o usuário tenha digitado os pontos manualmente, parseia agora
-            try:
-                texto = painel.elementos_recorte.get('entrada_clip_pontos')
-                if texto:
-                    pts_str = [p.strip() for p in texto.get_text().split(';')]
-                    pts = [tuple(map(int, p.split(','))) for p in pts_str if p]
-                    if pts:
-                        self.clip_poly_pontos = pts
-            except Exception:
-                pass
             if len(self.clip_poly_pontos) < 3:
                 print("A janela poligonal requer pelo menos 3 vértices.")
                 self.clip_poly_capturando = False
@@ -448,6 +449,14 @@ class Aplicacao:
                 self.clip_poly_capturando = False
                 # mantém a prévia para o usuário visualizar o erro
                 return
+
+            # Atualiza o campo de texto com os pontos da janela que será usada
+            try:
+                texto_pontos = '; '.join(f"{x},{y}" for x, y in self.clip_poly_pontos)
+                painel.elementos_recorte['entrada_clip_pontos'].set_text(texto_pontos)
+            except Exception as e:
+                print(f"Erro ao atualizar campo de texto da janela: {e}")
+
             # Aplica recorte apenas para Polilinha selecionada
             indice_sel = self.area_desenho.obter_indice_selecionado()
             if indice_sel is None:
@@ -475,10 +484,9 @@ class Aplicacao:
                 # Nada restou — remove desenho
                 self.area_desenho.remover_desenho_indice(indice_sel)
                 print("Polilinha completamente fora da janela convexa. Removida.")
-            # Limpa estados de captura/preview
+            
+            # Finaliza o modo de captura, mas mantém a janela (pontos e preview) para referência futura
             self.clip_poly_capturando = False
-            self.clip_poly_pontos = []
-            self.area_desenho.limpar_preview_clip_poligono()
         
         # --- Lógica de Transformação ---
         elif evento.ui_element == painel.elementos_transformacao.get('btn_trans'):

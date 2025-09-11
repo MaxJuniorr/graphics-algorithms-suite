@@ -84,7 +84,7 @@ class PainelControle:
         y += 22
         self.elementos_recorte['entrada_clip_pontos'] = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 30)), manager=self.ui_manager)
-        self.elementos_recorte['entrada_clip_pontos'].set_text('')
+        self.elementos_recorte['entrada_clip_pontos'].set_text('-20,-20; 20,-20; 20,20; -20,20')
         # Campos para recorte de Linha via margens (abaixo da janela poligonal)
         y += 40
         # Campos para recorte de Linha via margens

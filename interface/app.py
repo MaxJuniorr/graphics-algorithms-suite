@@ -12,9 +12,9 @@ from algoritmos.recorte import cohen_sutherland_clip, sutherland_hodgman_clip
 import algoritmos.transformacoes as transform
 
 # --- Constantes de Layout ---
-LARGURA_TOTAL = 1200
+LARGURA_TOTAL = 1250
 ALTURA_TOTAL = 800
-LARGURA_PAINEL = 400
+LARGURA_PAINEL = 450
 LARGURA_CANVAS = LARGURA_TOTAL - LARGURA_PAINEL
 ALTURA_CANVAS = ALTURA_TOTAL
 COR_PAINEL = (60, 60, 60)

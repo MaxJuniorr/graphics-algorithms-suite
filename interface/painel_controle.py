@@ -70,7 +70,7 @@ class PainelControle:
         linha_alt = 35
         # left margin [preencher] [def]
         self.elementos_recorte['label_left'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='left margin:', manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='left:', manager=self.ui_manager)
         self.elementos_recorte['left'] = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((x_hist + 95, y), (60, 30)), manager=self.ui_manager)
         self.elementos_recorte['btn_left'] = pygame_gui.elements.UIButton(
@@ -78,7 +78,7 @@ class PainelControle:
         # bottom margin [preencher] [def]
         y += linha_alt
         self.elementos_recorte['label_bottom'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='bottom margin:', manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='bottom:', manager=self.ui_manager)
         self.elementos_recorte['bottom'] = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((x_hist + 95, y), (60, 30)), manager=self.ui_manager)
         self.elementos_recorte['btn_bottom'] = pygame_gui.elements.UIButton(
@@ -86,7 +86,7 @@ class PainelControle:
         # right margin [preencher] [def]
         y += linha_alt
         self.elementos_recorte['label_right'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='right margin:', manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='right:', manager=self.ui_manager)
         self.elementos_recorte['right'] = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((x_hist + 95, y), (60, 30)), manager=self.ui_manager)
         self.elementos_recorte['btn_right'] = pygame_gui.elements.UIButton(
@@ -94,7 +94,7 @@ class PainelControle:
         # top margin [preencher] [def]
         y += linha_alt
         self.elementos_recorte['label_top'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='top margin:', manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='top:', manager=self.ui_manager)
         self.elementos_recorte['top'] = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((x_hist + 95, y), (60, 30)), manager=self.ui_manager)
         self.elementos_recorte['btn_top'] = pygame_gui.elements.UIButton(

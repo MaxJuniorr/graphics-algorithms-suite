@@ -60,7 +60,7 @@ Contém a lógica pura e matemática de cada algoritmo. As funções neste pacot
         - **Funcionamento**: A cada ponto da linha é atribuído um "outcode" de 4 bits que identifica em qual região o ponto se encontra em relação à janela de recorte (dentro, topo, base, esquerda, direita).
         - **Aceitação Trivial**: Se ambos os outcodes são 0, a linha está inteiramente dentro.
         - **Rejeição Trivial**: Se o `AND` lógico de ambos os outcodes é diferente de 0, a linha está inteiramente fora da mesma região (ex: ambos acima do topo) e pode ser descartada.
-        - **Recorte**: Se nenhum dos casos acima se aplica, a linha cruza a fronteira. O algoritmo calcula o ponto de interseção com uma das arestas da janela e atualiza o ponto que estava fora, repetindo o processo até que a linha possa ser trivialmente aceita ou rejeitada.
+        - **Recorte**: Se nenhum dos casos acima se aplica, a linha cruza a fronteira. O algoritmo calcula o ponto de interseção com uma das arestas da janela, arredonda o resultado para coordenadas inteiras e atualiza o ponto que estava fora, repetindo o processo até que a linha possa ser trivialmente aceita ou rejeitada.
     - `sutherland_hodgman_clip(subject_polygon, clip_window)`: Implementa o algoritmo de Sutherland-Hodgman para recorte de polígonos.
         - **Funcionamento**: O algoritmo processa o polígono contra cada uma das quatro arestas da janela de recorte (esquerda, direita, topo, base) sequencialmente.
         - Para cada aresta, ele itera sobre os vértices do polígono. A cada par de vértices (uma aresta do polígono), ele avalia quatro casos possíveis:
@@ -69,6 +69,7 @@ Contém a lógica pura e matemática de cada algoritmo. As funções neste pacot
             3.  Ambos fora: Nada é adicionado.
             4.  Primeiro fora, segundo dentro: A interseção e o segundo vértice são adicionados à saída.
         - A lista de vértices de saída de uma etapa se torna a entrada para a próxima, até que o polígono tenha sido recortado por todas as quatro arestas.
+        - **Pós-processamento**: Ao final, o algoritmo remove vértices duplicados consecutivos e garante que o polígono resultante seja fechado (o primeiro e o último vértice são iguais) se ele tiver pelo menos 2 vértices.
 
 **Algoritmos Planejados (Arquivos Vazios):**
 - `projecoes.py`

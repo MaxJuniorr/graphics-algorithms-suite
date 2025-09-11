@@ -92,6 +92,8 @@ class Aplicacao:
                     elif self.polilinha_capturando and evento.pos[0] < LARGURA_CANVAS:
                         coords = self.area_desenho.tela_para_grade(*evento.pos)
                         self.polilinha_pontos.append((coords[0], coords[1]))
+                        # Atualiza a pré-visualização em vermelho
+                        self.area_desenho.definir_preview_polilinha(self.polilinha_pontos)
                         # Atualiza preview textual no painel
                         try:
                             texto = '; '.join(f"{x},{y}" for x, y in self.polilinha_pontos)
@@ -104,9 +106,28 @@ class Aplicacao:
                 elif evento.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     if evento.ui_element == self.painel_controle.seletor_figura:
                         self.painel_controle.mostrar_elementos_figura(evento.text)
+                        # Mostrar prévia apenas quando Polilinha está selecionada
+                        if evento.text == 'Polilinha':
+                            try:
+                                pontos_str = [p.strip() for p in self.painel_controle.elementos_polilinha['entrada_pontos'].get_text().split(';')]
+                                pontos = [tuple(map(int, p.split(','))) for p in pontos_str if p]
+                                self.area_desenho.definir_preview_polilinha(pontos if len(pontos) >= 2 else None)
+                            except Exception:
+                                self.area_desenho.limpar_preview_polilinha()
+                        else:
+                            self.area_desenho.limpar_preview_polilinha()
                 elif evento.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
                     if evento.ui_element == self.painel_controle.lista_historico:
                         self.manipular_selecao_historico(evento)
+                elif evento.type == pygame_gui.UI_TEXT_ENTRY_CHANGED:
+                    # Atualiza a prévia ao digitar pontos da polilinha
+                    if evento.ui_element == self.painel_controle.elementos_polilinha.get('entrada_pontos'):
+                        try:
+                            pontos_str = [p.strip() for p in self.painel_controle.elementos_polilinha['entrada_pontos'].get_text().split(';')]
+                            pontos = [tuple(map(int, p.split(','))) for p in pontos_str if p]
+                            self.area_desenho.definir_preview_polilinha(pontos if len(pontos) >= 2 else None)
+                        except Exception:
+                            self.area_desenho.limpar_preview_polilinha()
             self.painel_controle.atualizar_historico(self.area_desenho.obter_historico(), self.area_desenho.obter_indice_selecionado())
             # Atualiza a janela de recorte (retângulo vermelho) a cada frame, se uma linha ou polilinha estiver selecionada
             try:
@@ -341,6 +362,8 @@ class Aplicacao:
             self.polilinha_pontos = []
             self.painel_controle.elementos_polilinha['entrada_pontos'].set_text('')
             print("Clique no canvas para adicionar vértices. Clique em 'Finalizar' para concluir.")
+            # Limpa a pré-visualização até que pontos sejam adicionados
+            self.area_desenho.limpar_preview_polilinha()
         elif evento.ui_element == painel.elementos_polilinha.get('btn_finalizar_clique'):
             if len(self.polilinha_pontos) < 2:
                 print("Polilinha por clique requer pelo menos 2 pontos.")
@@ -348,6 +371,8 @@ class Aplicacao:
                 self.area_desenho.adicionar_forma("Polilinha", {'pontos': list(self.polilinha_pontos)})
             self.polilinha_capturando = False
             self.polilinha_pontos = []
+            # Remove a prévia após finalizar
+            self.area_desenho.limpar_preview_polilinha()
         elif evento.ui_element == painel.elementos_polilinha.get('btn_ligar_primeiro'):
             # Fecha a polilinha ligando o último ponto ao primeiro
             if self.polilinha_capturando:
@@ -358,6 +383,8 @@ class Aplicacao:
                         self.painel_controle.elementos_polilinha['entrada_pontos'].set_text(texto)
                     except Exception:
                         pass
+                    # Atualiza prévia ao fechar
+                    self.area_desenho.definir_preview_polilinha(self.polilinha_pontos)
             else:
                 try:
                     pontos_str = [p.strip() for p in painel.elementos_polilinha['entrada_pontos'].get_text().split(';')]
@@ -367,6 +394,8 @@ class Aplicacao:
                             pontos.append(pontos[0])
                             texto = '; '.join(f"{x},{y}" for x, y in pontos)
                             self.painel_controle.elementos_polilinha['entrada_pontos'].set_text(texto)
+                        # Atualiza prévia baseada no texto ajustado
+                        self.area_desenho.definir_preview_polilinha(pontos if len(pontos) >= 2 else None)
                 except ValueError:
                     print("Erro: Formato dos pontos inválido. Use 'x1,y1; x2,y2; ...'")
         

@@ -20,6 +20,7 @@ class PainelControle:
         self.elementos_pentagono = {}
         self.elementos_hexagono = {}
         self.elementos_transformacao = {}
+        self.elementos_recorte = {}
 
         # Cache do histórico
         self._historico_cache_str = None
@@ -55,6 +56,32 @@ class PainelControle:
             manager=self.ui_manager,
             object_id='#botao_excluir_selecao'
         )
+
+        # Recorte de Linha (abaixo do histórico)
+        y_recorte = self.altura_historico + 40
+        self.elementos_recorte['label'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte), (self.largura_historico, 20)),
+            text='Janela de Recorte',
+            manager=self.ui_manager
+        )
+        # Pontos da janela
+        for i in range(1, 5):
+            y_off = y_recorte + 30 + (i-1) * 40
+            self.elementos_recorte[f'label_p{i}'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.posicao_x_historico, y_off), (30, 20)), text=f'P{i}:', manager=self.ui_manager)
+            self.elementos_recorte[f'p{i}_x'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico + 30, y_off), (50, 30)), manager=self.ui_manager)
+            self.elementos_recorte[f'p{i}_y'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico + 85, y_off), (50, 30)), manager=self.ui_manager)
+            self.elementos_recorte[f'btn_p{i}'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.posicao_x_historico + 140, y_off), (60, 30)), text='Def', manager=self.ui_manager, object_id=f'#recorte_set_p{i}')
+
+        self.elementos_recorte['btn_recorte'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte + 190), (self.largura_historico, 30)), text='Aplicar Recorte', manager=self.ui_manager, object_id='#recorte_aplicar')
+        
+        # Valores padrão para um retângulo
+        defaults = [('-20', '-20'), ('20', '-20'), ('20', '20'), ('-20', '20')]
+        for i in range(1, 5):
+            self.elementos_recorte[f'p{i}_x'].set_text(defaults[i-1][0])
+            self.elementos_recorte[f'p{i}_y'].set_text(defaults[i-1][1])
+
+        for comp in self.elementos_recorte.values():
+            comp.hide()
 
         # Configuração de grade
         pygame_gui.elements.UILabel(
@@ -403,6 +430,8 @@ class PainelControle:
         self.elementos_transformacao['rot_px'].set_text('0')
         self.elementos_transformacao['rot_py'].set_text('0')
 
+        
+
         # Preenchimento (alinhado conforme solicitado)
         # Título "Preenchimento:" ao lado direito de Desfazer
         desf_x, desf_y, desf_w, desf_h = (self.largura_canvas + 10), (self.altura_total - 90), 180, 35
@@ -466,8 +495,18 @@ class PainelControle:
         self._historico_cache_str = assinatura_completa
 
         lista_para_ui = []
+        show_recorte = False
         for i, desenho in enumerate(historico):
             prefixo = "* " if i == indice_selecionado else ""
             lista_para_ui.append(f"{prefixo}{i+1}. {desenho.tipo}")
+            if i == indice_selecionado and desenho.tipo == 'Linha (Bresenham)':
+                show_recorte = True
 
         self.lista_historico.set_item_list(lista_para_ui)
+
+        if show_recorte:
+            for comp in self.elementos_recorte.values():
+                comp.show()
+        else:
+            for comp in self.elementos_recorte.values():
+                comp.hide()

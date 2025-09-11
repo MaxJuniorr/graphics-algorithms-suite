@@ -61,25 +61,18 @@ class PainelControle:
         y_recorte = self.altura_historico + 40
         self.elementos_recorte['label'] = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte), (self.largura_historico, 20)),
-            text='Janela de Recorte',
+            text='Recorte de Linha',
             manager=self.ui_manager
         )
-        # Pontos da janela
-        for i in range(1, 5):
-            y_off = y_recorte + 30 + (i-1) * 40
-            self.elementos_recorte[f'label_p{i}'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.posicao_x_historico, y_off), (30, 20)), text=f'P{i}:', manager=self.ui_manager)
-            self.elementos_recorte[f'p{i}_x'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico + 30, y_off), (50, 30)), manager=self.ui_manager)
-            self.elementos_recorte[f'p{i}_y'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico + 85, y_off), (50, 30)), manager=self.ui_manager)
-            self.elementos_recorte[f'btn_p{i}'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.posicao_x_historico + 140, y_off), (60, 30)), text='Def', manager=self.ui_manager, object_id=f'#recorte_set_p{i}')
-
-        self.elementos_recorte['btn_recorte'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte + 190), (self.largura_historico, 30)), text='Aplicar Recorte', manager=self.ui_manager, object_id='#recorte_aplicar')
-        
-        # Valores padrão para um retângulo
-        defaults = [('-20', '-20'), ('20', '-20'), ('20', '20'), ('-20', '20')]
-        for i in range(1, 5):
-            self.elementos_recorte[f'p{i}_x'].set_text(defaults[i-1][0])
-            self.elementos_recorte[f'p{i}_y'].set_text(defaults[i-1][1])
-
+        self.elementos_recorte['xmin'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte + 30), (45, 30)), manager=self.ui_manager)
+        self.elementos_recorte['ymin'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico + 50, y_recorte + 30), (45, 30)), manager=self.ui_manager)
+        self.elementos_recorte['xmax'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico + 100, y_recorte + 30), (45, 30)), manager=self.ui_manager)
+        self.elementos_recorte['ymax'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico + 150, y_recorte + 30), (45, 30)), manager=self.ui_manager)
+        self.elementos_recorte['btn_recorte'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte + 70), (self.largura_historico, 30)), text='Aplicar Recorte', manager=self.ui_manager, object_id='#recorte_aplicar')
+        self.elementos_recorte['xmin'].set_text('-20')
+        self.elementos_recorte['ymin'].set_text('-20')
+        self.elementos_recorte['xmax'].set_text('20')
+        self.elementos_recorte['ymax'].set_text('20')
         for comp in self.elementos_recorte.values():
             comp.hide()
 

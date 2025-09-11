@@ -21,8 +21,8 @@ class AreaDesenho:
         self.janela_recorte = None
         self.atualizar_resolucao_grid(largura_grid, altura_grid)
 
-    def definir_janela_recorte(self, vertices):
-        self.janela_recorte = vertices
+    def definir_janela_recorte(self, rect):
+        self.janela_recorte = rect
 
     def limpar_janela_recorte(self):
         self.janela_recorte = None
@@ -94,12 +94,14 @@ class AreaDesenho:
         self.desenhar_grade()
 
         if self.janela_recorte:
-            pontos_tela = []
-            for x_grid, y_grid in self.janela_recorte:
-                x_tela = self.largura / 2 + x_grid * self.tamanho_celula_x
-                y_tela = self.altura / 2 - (y_grid + 1) * self.tamanho_celula_y
-                pontos_tela.append((x_tela, y_tela))
-            pygame.draw.polygon(self.surface, (255, 0, 0), pontos_tela, 1) # Vermelho, borda de 1 pixel
+            xmin, ymin, xmax, ymax = self.janela_recorte
+            # Converte coordenadas da grade para a tela
+            x_tela_min = self.largura / 2 + xmin * self.tamanho_celula_x
+            y_tela_min = self.altura / 2 - (ymax + 1) * self.tamanho_celula_y
+            largura_tela = (xmax - xmin + 1) * self.tamanho_celula_x
+            altura_tela = (ymax - ymin + 1) * self.tamanho_celula_y
+            rect = pygame.Rect(x_tela_min, y_tela_min, largura_tela, altura_tela)
+            pygame.draw.rect(self.surface, (255, 0, 0), rect, 1) # Vermelho, borda de 1 pixel
         
         for i, desenho in enumerate(self.obter_historico()):
             cor = COR_SELECIONADO if i == self.indice_selecionado else COR_PIXEL

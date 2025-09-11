@@ -1,5 +1,4 @@
 import math
-import math
 import pygame
 import pygame_gui
 from interface.painel_controle import PainelControle
@@ -9,7 +8,7 @@ from algoritmos.circulo_elipse import calcular_circulo, calcular_elipse
 from algoritmos.curvas_bezier import rasterizar_curva_bezier
 from algoritmos.polilinha import rasterizar_polilinha
 from algoritmos.preenchimento import preencher_scanline, preencher_recursao, preencher_flood_canvas, preencher_scanline_multi
-from algoritmos.recorte import cyrus_beck_clip, is_convex
+from algoritmos.recorte import cohen_sutherland_clip
 import algoritmos.transformacoes as transform
 
 # --- Constantes de Layout ---
@@ -198,9 +197,6 @@ class Aplicacao:
         elif tipo_figura == 'hexagono':
             self.painel_controle.elementos_hexagono[f'{ponto}_x'].set_text(x_str)
             self.painel_controle.elementos_hexagono[f'{ponto}_y'].set_text(y_str)
-        elif tipo_figura == 'recorte':
-            self.painel_controle.elementos_recorte[f'{ponto}_x'].set_text(x_str)
-            self.painel_controle.elementos_recorte[f'{ponto}_y'].set_text(y_str)
         elif tipo_figura == 'flood':
             # Flood fill livre no canvas: preenche região vazia conectada à seed
             seed = (coords[0], coords[1])
@@ -446,25 +442,15 @@ class Aplicacao:
             if desenho.tipo != "Linha (Bresenham)":
                 print("Recorte disponível apenas para linhas."); return
             try:
-                vertices = []
-                for i in range(1, 5):
-                    x = int(painel.elementos_recorte[f'p{i}_x'].get_text())
-                    y = int(painel.elementos_recorte[f'p{i}_y'].get_text())
-                    vertices.append((x, y))
-
-                # Reordenar os vértices para garantir a ordem CCW
-                centro_x = sum(p[0] for p in vertices) / 4
-                centro_y = sum(p[1] for p in vertices) / 4
-                vertices.sort(key=lambda p: math.atan2(p[1] - centro_y, p[0] - centro_x))
-
-                if not is_convex(vertices):
-                    print("A janela de recorte precisa ser um polígono convexo.")
-                    return
+                xmin = int(painel.elementos_recorte['xmin'].get_text())
+                ymin = int(painel.elementos_recorte['ymin'].get_text())
+                xmax = int(painel.elementos_recorte['xmax'].get_text())
+                ymax = int(painel.elementos_recorte['ymax'].get_text())
 
                 p1 = desenho.parametros['p1']
                 p2 = desenho.parametros['p2']
-                self.area_desenho.definir_janela_recorte(vertices)
-                resultado = cyrus_beck_clip(p1, p2, vertices)
+                self.area_desenho.definir_janela_recorte((xmin, ymin, xmax, ymax))
+                resultado = cohen_sutherland_clip(p1, p2, xmin, ymin, xmax, ymax)
                 if resultado:
                     desenho.parametros['p1'], desenho.parametros['p2'] = resultado
                     print("Linha recortada com sucesso.")
@@ -557,9 +543,6 @@ class Aplicacao:
                 painel.elementos_hexagono.get('btn_p6'): 'p6',
             }
             self.proximo_clique_define = ('hexagono', btn_map_h[evento.ui_element])
-        elif evento.ui_element in [painel.elementos_recorte.get(k) for k in ['btn_p1', 'btn_p2', 'btn_p3', 'btn_p4']]:
-            p_map = {painel.elementos_recorte.get(f'btn_p{i}'): f'p{i}' for i in range(1, 5)}
-            self.proximo_clique_define = ('recorte', p_map[evento.ui_element])
         elif evento.ui_element == painel.botao_limpar: self.area_desenho.limpar_pixels()
         elif evento.ui_element == painel.botao_desfazer: self.area_desenho.desfazer_ultimo_desenho()
         elif evento.ui_element == painel.botao_excluir_selecao:

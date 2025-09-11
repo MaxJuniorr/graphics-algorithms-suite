@@ -422,17 +422,17 @@ class PainelControle:
         # Vamos usar 438..500 (62px) com componentes compactos (18/22/22 px).
         predef_y = base_y + 178  # 260 + 178 = 438
         self.elementos_polilinha['label_predef'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y), (220, 18)),
-            text='Polilinha Predefinida:', manager=self.ui_manager
+            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y), (220, 20)),
+            text='Predefinida:', manager=self.ui_manager
         )
         self.elementos_polilinha['dropdown_predef'] = pygame_gui.elements.UIDropDownMenu(
             options_list=['Triângulo', 'Quadrilátero', 'Pentágono', 'Hexágono'],
             starting_option='Triângulo',
-            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y + 18), (210, 22)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y + 20), (210, 22)),
             manager=self.ui_manager
         )
         self.elementos_polilinha['btn_usar_predef'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y + 40), (210, 22)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y + 42), (210, 20)),
             text='Usar predefinida', manager=self.ui_manager, object_id='#polilinha_usar_predef'
         )
 

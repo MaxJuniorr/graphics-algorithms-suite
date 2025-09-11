@@ -417,20 +417,22 @@ class PainelControle:
         for k, v in defaults_hex.items():
             self.elementos_hexagono[k].set_text(v)
 
-        # --- Polilinha: Predefinidas (abaixo dos controles de polilinha) ---
-        predef_y = base_y + 185
+        # --- Polilinha: Predefinidas (abaixo dos controles de polilinha), ajustadas para não invadir transformações ---
+        # Área atual de polilinha vai até base_y + 178; transformações começam em 500.
+        # Vamos usar 438..500 (62px) com componentes compactos (18/22/22 px).
+        predef_y = base_y + 178  # 260 + 178 = 438
         self.elementos_polilinha['label_predef'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y), (220, 20)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y), (220, 18)),
             text='Polilinha Predefinida:', manager=self.ui_manager
         )
         self.elementos_polilinha['dropdown_predef'] = pygame_gui.elements.UIDropDownMenu(
             options_list=['Triângulo', 'Quadrilátero', 'Pentágono', 'Hexágono'],
             starting_option='Triângulo',
-            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y + 25), (210, 30)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y + 18), (210, 22)),
             manager=self.ui_manager
         )
         self.elementos_polilinha['btn_usar_predef'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y + 60), (210, 30)),
+            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y + 40), (210, 22)),
             text='Usar predefinida', manager=self.ui_manager, object_id='#polilinha_usar_predef'
         )
 

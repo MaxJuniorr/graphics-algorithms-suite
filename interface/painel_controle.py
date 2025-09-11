@@ -396,7 +396,7 @@ class PainelControle:
             manager=self.ui_manager
         )
         self.elementos_transformacao['btn_rot'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 260, y_offset), (60, 30)),
+            relative_rect=pygame.Rect((self.largura_canvas + 260, y_offset), (60, 60)),
             text='Aplicar', manager=self.ui_manager, object_id='#rot_aplicar'
         )
         self.elementos_transformacao['rot_angulo'].set_text('45')

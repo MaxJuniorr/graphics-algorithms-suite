@@ -108,12 +108,12 @@ class Aplicacao:
                     if evento.ui_element == self.painel_controle.lista_historico:
                         self.manipular_selecao_historico(evento)
             self.painel_controle.atualizar_historico(self.area_desenho.obter_historico(), self.area_desenho.obter_indice_selecionado())
-            # Atualiza a janela de recorte (retângulo vermelho) a cada frame, se uma linha estiver selecionada
+            # Atualiza a janela de recorte (retângulo vermelho) a cada frame, se uma linha ou polilinha estiver selecionada
             try:
                 idx = self.area_desenho.obter_indice_selecionado()
                 if idx is not None:
                     d = self.area_desenho.obter_historico()[idx]
-                    if d.tipo == "Linha (Bresenham)":
+                    if d.tipo in ("Linha (Bresenham)", "Polilinha"):
                         left = int(self.painel_controle.elementos_recorte['left'].get_text())
                         bottom = int(self.painel_controle.elementos_recorte['bottom'].get_text())
                         right = int(self.painel_controle.elementos_recorte['right'].get_text())
@@ -469,10 +469,8 @@ class Aplicacao:
             if indice_selecionado is None:
                 print("Nenhum objeto selecionado."); return
             desenho = self.area_desenho.obter_historico()[indice_selecionado]
-            if desenho.tipo != "Linha (Bresenham)":
-                print("Recorte disponível apenas para linhas."); return
             try:
-                # Janela a partir das margens
+                # Janela a partir das margens (unificado)
                 left = int(painel.elementos_recorte['left'].get_text())
                 bottom = int(painel.elementos_recorte['bottom'].get_text())
                 right = int(painel.elementos_recorte['right'].get_text())
@@ -480,49 +478,35 @@ class Aplicacao:
                 xmin, xmax = sorted([left, right])
                 ymin, ymax = sorted([bottom, top])
 
-                # Segmento atual da linha selecionada
-                p1 = desenho.parametros['p1']
-                p2 = desenho.parametros['p2']
+                self.area_desenho.definir_janela_recorte((xmin, ymin, xmax, ymax))
 
-                resultado = cohen_sutherland_clip(p1, p2, xmin, ymin, xmax, ymax)
-                if resultado:
-                    desenho.parametros['p1'], desenho.parametros['p2'] = resultado
-                    # Mantém a janela desenhada atualizada
-                    self.area_desenho.definir_janela_recorte((xmin, ymin, xmax, ymax))
-                    print("Linha recortada com sucesso.")
+                if desenho.tipo == "Linha (Bresenham)":
+                    p1 = desenho.parametros['p1']
+                    p2 = desenho.parametros['p2']
+                    resultado = cohen_sutherland_clip(p1, p2, xmin, ymin, xmax, ymax)
+                    if resultado:
+                        desenho.parametros['p1'], desenho.parametros['p2'] = resultado
+                        print("Linha recortada com sucesso.")
+                    else:
+                        self.area_desenho.remover_desenho_indice(indice_selecionado)
+                        self.area_desenho.limpar_janela_recorte()
+                        print("Linha completamente fora da área de recorte. Removida.")
+                elif desenho.tipo == "Polilinha":
+                    subject_polygon = desenho.parametros.get('pontos', [])
+                    clip_window = (xmin, ymin, xmax, ymax)
+                    clipped_polygon = sutherland_hodgman_clip(subject_polygon, clip_window)
+                    if clipped_polygon:
+                        desenho.parametros['pontos'] = clipped_polygon
+                        print("Polígono recortado com sucesso.")
+                    else:
+                        self.area_desenho.remover_desenho_indice(indice_selecionado)
+                        print("Polígono completamente fora da área de recorte. Removido.")
                 else:
-                    self.area_desenho.remover_desenho_indice(indice_selecionado)
-                    self.area_desenho.limpar_janela_recorte()
-                    print("Linha completamente fora da área de recorte. Removida.")
+                    print("Recorte disponível para Linha e Polilinha.")
             except ValueError:
                 print("Erro nos parâmetros de recorte.")
 
-        elif evento.ui_element == painel.elementos_recorte.get('btn_recorte_poligono'):
-            indice_selecionado = self.area_desenho.obter_indice_selecionado()
-            if indice_selecionado is None: print("Nenhum objeto selecionado."); return
-            desenho = self.area_desenho.obter_historico()[indice_selecionado]
-            if desenho.tipo != "Polilinha":
-                print("Recorte de polígono disponível apenas para Polilinhas."); return
-            try:
-                xmin = int(painel.elementos_recorte['xmin'].get_text())
-                ymin = int(painel.elementos_recorte['ymin'].get_text())
-                xmax = int(painel.elementos_recorte['xmax'].get_text())
-                ymax = int(painel.elementos_recorte['ymax'].get_text())
-                
-                clip_window = (xmin, ymin, xmax, ymax)
-                self.area_desenho.definir_janela_recorte(clip_window)
-                subject_polygon = desenho.parametros['pontos']
-                
-                clipped_polygon = sutherland_hodgman_clip(subject_polygon, clip_window)
-                
-                if clipped_polygon:
-                    desenho.parametros['pontos'] = clipped_polygon
-                    print("Polígono recortado com sucesso.")
-                else:
-                    self.area_desenho.remover_desenho_indice(indice_selecionado)
-                    print("Polígono completamente fora da área de recorte. Removido.")
-
-            except ValueError: print("Erro nos parâmetros de recorte.")
+    # Botão específico de polígono removido — recorte unificado no botão principal
 
         elif evento.ui_element == painel.elementos_transformacao.get('btn_preencher_scan'):
             # Preenche via Scanline: suporta Polilinha, Círculo e Elipse.

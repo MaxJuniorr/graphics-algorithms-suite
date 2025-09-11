@@ -114,23 +114,7 @@ class PainelControle:
         }
         for k, v in defaults_rec.items():
             self.elementos_recorte[k].set_text(v)
-        # Campos para recorte de Polígono (xmin, ymin, xmax, ymax) e botão dedicado
-        self.elementos_recorte['xmin'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte + 30), (45, 30)), manager=self.ui_manager)
-        self.elementos_recorte['ymin'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((self.posicao_x_historico + 50, y_recorte + 30), (45, 30)), manager=self.ui_manager)
-        self.elementos_recorte['xmax'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((self.posicao_x_historico + 100, y_recorte + 30), (45, 30)), manager=self.ui_manager)
-        self.elementos_recorte['ymax'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((self.posicao_x_historico + 150, y_recorte + 30), (45, 30)), manager=self.ui_manager)
-        self.elementos_recorte['btn_recorte_poligono'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte + 110), (self.largura_historico, 30)),
-            text='Recortar Polígono', manager=self.ui_manager, object_id='#recorte_poligono_aplicar')
-        # Defaults dos campos do polígono
-        self.elementos_recorte['xmin'].set_text('-20')
-        self.elementos_recorte['ymin'].set_text('-20')
-        self.elementos_recorte['xmax'].set_text('20')
-        self.elementos_recorte['ymax'].set_text('20')
+    # Interface antiga de polígono removida em favor das margens unificadas
         for comp in self.elementos_recorte.values():
             comp.hide()
 
@@ -557,14 +541,22 @@ class PainelControle:
             elif desenho_selecionado.tipo == 'Polilinha':
                 show_recorte_poligono = True
 
+        # Atualiza o título com o algoritmo correspondente
+        if 'titulo' in self.elementos_recorte:
+            if show_recorte_linha:
+                self.elementos_recorte['titulo'].set_text('Recorte: Cohen-Sutherland')
+            elif show_recorte_poligono:
+                self.elementos_recorte['titulo'].set_text('Recorte: Sutherland-Hodgman')
+            else:
+                self.elementos_recorte['titulo'].set_text('Recorte')
+
         for i, desenho in enumerate(historico):
             prefixo = "* " if i == indice_selecionado else ""
             lista_para_ui.append(f"{prefixo}{i+1}. {desenho.tipo}")
 
         self.lista_historico.set_item_list(lista_para_ui)
 
-        # Mostrar apenas a nova interface de linha (margens) para linhas,
-        # e apenas a interface de polígono (xmin..ymax) para polilinhas.
+        # Mostrar a interface de margens para linhas e polilinhas (unificado)
         margin_keys = {
             'label_left','left','btn_left',
             'label_bottom','bottom','btn_bottom',
@@ -572,14 +564,11 @@ class PainelControle:
             'label_top','top','btn_top',
             'botao','btn_recorte'
         }
-        poly_keys = {'xmin','ymin','xmax','ymax','btn_recorte_poligono'}
 
         for key, comp in self.elementos_recorte.items():
             if key == 'titulo':
                 comp.show() if (show_recorte_linha or show_recorte_poligono) else comp.hide()
             elif key in margin_keys:
-                comp.show() if show_recorte_linha else comp.hide()
-            elif key in poly_keys:
-                comp.show() if show_recorte_poligono else comp.hide()
+                comp.show() if (show_recorte_linha or show_recorte_poligono) else comp.hide()
             else:
                 comp.hide()

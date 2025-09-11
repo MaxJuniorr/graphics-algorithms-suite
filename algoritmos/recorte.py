@@ -68,12 +68,10 @@ def cyrus_beck_clip(p1, p2, vertices):
 
         if ds_dot_n != 0:
             t = -w_dot_n / ds_dot_n
-            if ds_dot_n > 0:  # Linha entrando
-                if t > te:
-                    te = t
-            else:  # Linha saindo
-                if t < tl:
-                    tl = t
+            if ds_dot_n < 0:  # Linha entrando na aresta
+                te = max(te, t)
+            elif ds_dot_n > 0:  # Linha saindo da aresta
+                tl = min(tl, t)
     
     if te > tl:
         return None

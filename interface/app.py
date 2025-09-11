@@ -340,7 +340,7 @@ class Aplicacao:
             try:
                 self.area_desenho.atualizar_resolucao_grid(int(painel.entrada_largura.get_text()), int(painel.entrada_altura.get_text()))
             except ValueError: print("Erro: A resolução deve ser um número inteiro.")
-        elif hasattr(painel, 'botao_projecoes') and evento.ui_element == painel.botao_projecoes:
+        elif evento.ui_element == painel.elementos_projecao.get('botao'):
             if self.painel_projecoes is None or not self.painel_projecoes.alive():
                 self.painel_projecoes = PainelProjecoes(self.ui_manager, LARGURA_CANVAS)
             else:

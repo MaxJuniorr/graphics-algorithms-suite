@@ -156,7 +156,7 @@ class PainelControle:
             manager=self.ui_manager
         )
         self.seletor_figura = pygame_gui.elements.UIDropDownMenu(
-            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha'],
+            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha', 'Projeções 3D'],
             starting_option='Linha (Bresenham)',
             relative_rect=pygame.Rect((self.largura_canvas + 10, 210), (180, 30)),
             manager=self.ui_manager
@@ -517,13 +517,15 @@ class PainelControle:
             text='Flood Fill', manager=self.ui_manager, object_id='#preencher_recursao'
         )
 
-        # Módulo 3D
-        self.botao_projecoes = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, y_acoes_base + 80), (180, 35)),
-            text='Projeções 3D',
+        # Módulo 3D (mostra apenas quando a figura 'Projeções 3D' é selecionada)
+        self.elementos_projecao['botao'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, 250), (180, 35)),
+            text='Coordenadas 3D',
             manager=self.ui_manager,
             object_id='#botao_projecoes'
         )
+        # Esconde por padrão; mostrar via mostrar_elementos_figura
+        self.elementos_projecao['botao'].hide()
 
     def _construir_recorte_poligonal(self, x_hist: int, y_recorte: int) -> None:
         """Cria os controles de janela poligonal (convexa) para Sutherland–Hodgman,
@@ -550,7 +552,7 @@ class PainelControle:
         self.elementos_recorte['entrada_clip_pontos'].set_text('-20,-20; 20,-20; 20,20; -20,20')
 
     def mostrar_elementos_figura(self, figura):
-        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo, self.elementos_quadrilatero, self.elementos_pentagono, self.elementos_hexagono]:
+        for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo, self.elementos_quadrilatero, self.elementos_pentagono, self.elementos_hexagono, self.elementos_projecao]:
             for comp in grupo.values():
                 comp.hide()
         mapping = {
@@ -558,7 +560,8 @@ class PainelControle:
             'Círculo': self.elementos_circulo,
             'Curva de Bézier': self.elementos_bezier,
             'Elipse': self.elementos_elipse,
-            'Polilinha': self.elementos_polilinha
+            'Polilinha': self.elementos_polilinha,
+            'Projeções 3D': self.elementos_projecao
         }.get(figura, {})
         for comp in mapping.values():
             comp.show()

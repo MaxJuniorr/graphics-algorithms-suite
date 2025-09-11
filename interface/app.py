@@ -493,9 +493,15 @@ class Aplicacao:
                         print("Linha completamente fora da área de recorte. Removida.")
                 elif desenho.tipo == "Polilinha":
                     subject_polygon = desenho.parametros.get('pontos', [])
+                    # Remove vértice duplicado de fechamento, se existir, para evitar arestas degeneradas no recorte
+                    if len(subject_polygon) >= 2 and subject_polygon[0] == subject_polygon[-1]:
+                        subject_polygon = subject_polygon[:-1]
                     clip_window = (xmin, ymin, xmax, ymax)
                     clipped_polygon = sutherland_hodgman_clip(subject_polygon, clip_window)
                     if clipped_polygon:
+                        # Garante polígono fechado para não perder a aresta de fechamento na rasterização
+                        if len(clipped_polygon) >= 2 and clipped_polygon[0] != clipped_polygon[-1]:
+                            clipped_polygon.append(clipped_polygon[0])
                         desenho.parametros['pontos'] = clipped_polygon
                         print("Polígono recortado com sucesso.")
                     else:

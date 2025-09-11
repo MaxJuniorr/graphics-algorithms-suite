@@ -182,9 +182,25 @@ def sutherland_hodgman_clip(subject_polygon, clip_window):
                 clipped.append(p2)
         return clipped
 
+    # Normaliza entrada: remove fechamento duplicado se existir
+    if subject_polygon and len(subject_polygon) >= 2 and subject_polygon[0] == subject_polygon[-1]:
+        subject_polygon = subject_polygon[:-1]
+    # Recortes sucessivos
     clipped_polygon = clip_left(subject_polygon)
     clipped_polygon = clip_right(clipped_polygon)
     clipped_polygon = clip_bottom(clipped_polygon)
     clipped_polygon = clip_top(clipped_polygon)
+
+    # Remove vértices redundantes consecutivos (ex.: iguais)
+    if clipped_polygon:
+        compact = [clipped_polygon[0]]
+        for p in clipped_polygon[1:]:
+            if p != compact[-1]:
+                compact.append(p)
+        clipped_polygon = compact
+
+    # Garante polígono fechado quando há pelo menos 2 vértices
+    if clipped_polygon and len(clipped_polygon) >= 2 and clipped_polygon[0] != clipped_polygon[-1]:
+        clipped_polygon.append(clipped_polygon[0])
 
     return clipped_polygon

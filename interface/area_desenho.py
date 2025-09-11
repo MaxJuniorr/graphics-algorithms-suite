@@ -21,6 +21,7 @@ class AreaDesenho:
         self.indice_selecionado = None
         self.janela_recorte = None
         self.preview_polilinha = None  # lista de pontos (x, y) para pré-visualização
+        self.preview_clip_poligono = None  # janela de recorte poligonal (convexa)
         # valores padrão até atualizar a resolução
         self.tamanho_celula_x = 0
         self.tamanho_celula_y = 0
@@ -37,6 +38,12 @@ class AreaDesenho:
 
     def limpar_preview_polilinha(self):
         self.preview_polilinha = None
+
+    def definir_preview_clip_poligono(self, pontos):
+        self.preview_clip_poligono = list(pontos) if pontos else None
+
+    def limpar_preview_clip_poligono(self):
+        self.preview_clip_poligono = None
 
     def atualizar_resolucao_grid(self, nova_largura, nova_altura):
         self.largura_grid = nova_largura
@@ -78,6 +85,7 @@ class AreaDesenho:
         self.indice_selecionado = None
         self.limpar_janela_recorte()
         self.limpar_preview_polilinha()
+        self.limpar_preview_clip_poligono()
 
     def desfazer_ultimo_desenho(self):
         self.historico.desfazer_ultimo_desenho()
@@ -104,6 +112,7 @@ class AreaDesenho:
         self.surface.fill(COR_FUNDO)
         self.desenhar_grade()
 
+        # Janela retangular (margens) em vermelho
         if self.janela_recorte:
             xmin, ymin, xmax, ymax = self.janela_recorte
             x0 = self.largura / 2 + xmin * self.tamanho_celula_x
@@ -113,6 +122,7 @@ class AreaDesenho:
             rect = pygame.Rect(x0, y0, w, h)
             pygame.draw.rect(self.surface, (255, 0, 0), rect, 1)
 
+        # Desenha histórico
         for i, desenho in enumerate(self.obter_historico()):
             cor = COR_SELECIONADO if i == self.indice_selecionado else COR_PIXEL
             pixels = self.rasterizar_desenho(desenho)
@@ -123,6 +133,14 @@ class AreaDesenho:
         if self.preview_polilinha and len(self.preview_polilinha) >= 2:
             preview_pixels = rasterizar_polilinha(self.preview_polilinha)
             for p in preview_pixels:
+                self.desenhar_pixel(p[0], p[1], (255, 0, 0))
+
+        # Pré-visualização da janela de recorte poligonal (em vermelho)
+        if self.preview_clip_poligono and len(self.preview_clip_poligono) >= 2:
+            pts = self.preview_clip_poligono
+            chain = pts if pts[0] == pts[-1] else (pts + [pts[0]] if len(pts) >= 3 else pts)
+            clip_pixels = rasterizar_polilinha(chain)
+            for p in clip_pixels:
                 self.desenhar_pixel(p[0], p[1], (255, 0, 0))
 
         tela.blit(self.surface, (0, 0))

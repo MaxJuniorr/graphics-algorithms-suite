@@ -1,4 +1,4 @@
-"""Implementação de algoritmos de recorte de linha."""
+"""Implementação de algoritmos de recorte de linha e polígono."""
 
 # Códigos de região para o algoritmo de Cohen-Sutherland
 INSIDE = 0  # 0000
@@ -204,3 +204,74 @@ def sutherland_hodgman_clip(subject_polygon, clip_window):
         clipped_polygon.append(clipped_polygon[0])
 
     return clipped_polygon
+
+
+def suth_hodgman_clip_convexo(subject_polygon, clip_polygon):
+    """Recorta um polígono arbitrário contra uma janela de recorte poligonal convexa.
+
+    subject_polygon: lista de (x,y) do polígono a recortar (aberto ou fechado).
+    clip_polygon: lista de (x,y) do polígono convexo da janela (aberto ou fechado).
+    Retorna lista de (x,y) do polígono resultante (fechado se houver pelo menos 2 vértices).
+    """
+    from utils.geometria import garantir_ccw
+
+    def intersect(p1, p2, q1, q2):
+        # Interseção de segmentos p1->p2 e q1->q2 (linhas infinitas)
+        x1, y1 = p1; x2, y2 = p2
+        x3, y3 = q1; x4, y4 = q2
+        den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+        if den == 0:
+            return p2  # paralelos/colineares, retorna extremo para manter continuidade
+        px = ((x1*y2 - y1*x2)*(x3 - x4) - (x1 - x2)*(x3*y4 - y3*x4)) / den
+        py = ((x1*y2 - y1*x2)*(y3 - y4) - (y1 - y2)*(x3*y4 - y3*x4)) / den
+        return (round(px), round(py))
+
+    def inside(p, a, b):
+        # Considerando borda a->b com polígono clip CCW, lado interno é à esquerda (cross >= 0)
+        ax, ay = a; bx, by = b; px, py = p
+        return (bx - ax) * (py - ay) - (by - ay) * (px - ax) >= 0
+
+    # Normaliza: remove fechamento duplicado
+    S = subject_polygon[:]
+    if len(S) >= 2 and S[0] == S[-1]:
+        S = S[:-1]
+    C = clip_polygon[:]
+    if len(C) >= 2 and C[0] == C[-1]:
+        C = C[:-1]
+    if len(C) < 3 or len(S) < 3:
+        return []
+    C = garantir_ccw(C)
+
+    output = S
+    for i in range(len(C)):
+        a = C[i]
+        b = C[(i + 1) % len(C)]
+        input_list = output
+        if not input_list:
+            break
+        output = []
+        for j in range(len(input_list)):
+            s = input_list[j]
+            e = input_list[(j + 1) % len(input_list)]
+            s_in = inside(s, a, b)
+            e_in = inside(e, a, b)
+            if s_in and e_in:
+                output.append(e)
+            elif s_in and not e_in:
+                output.append(intersect(s, e, a, b))
+            elif (not s_in) and e_in:
+                output.append(intersect(s, e, a, b))
+                output.append(e)
+            # ambos fora: adiciona nada
+
+    # Remove duplicatas consecutivas
+    if output:
+        compact = [output[0]]
+        for p in output[1:]:
+            if p != compact[-1]:
+                compact.append(p)
+        output = compact
+
+    if output and len(output) >= 2 and output[0] != output[-1]:
+        output.append(output[0])
+    return output

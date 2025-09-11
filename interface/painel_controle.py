@@ -57,7 +57,7 @@ class PainelControle:
             object_id='#botao_excluir_selecao'
         )
 
-        # Recorte de Linha (abaixo do histórico): usar apenas 4 margens
+        # Recorte (abaixo do histórico)
         y_recorte = self.altura_historico + 40
         x_hist = self.posicao_x_historico
         # Título
@@ -65,8 +65,29 @@ class PainelControle:
             relative_rect=pygame.Rect((x_hist, y_recorte), (self.largura_historico, 20)),
             text='Recorte', manager=self.ui_manager
         )
-        # Campos para recorte de Linha via margens
+        # Botões e entrada para janela poligonal (posicionados logo abaixo do título)
         y = y_recorte + 25
+        self.elementos_recorte['label_clip_poly'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 20)),
+            text='Janela por clique (convexa):', manager=self.ui_manager
+        )
+        y += 25
+        btn_w, btn_h, gap = 90, 28, 10
+        start_x = x_hist + 5
+        self.elementos_recorte['btn_clip_iniciar'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((start_x, y), (btn_w, btn_h)), text='Iniciar', manager=self.ui_manager, object_id='#clip_poly_iniciar')
+        self.elementos_recorte['btn_clip_finalizar'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((start_x + btn_w + gap, y), (btn_w, btn_h)), text='Finalizar', manager=self.ui_manager, object_id='#clip_poly_finalizar')
+        y += btn_h + 8
+        self.elementos_recorte['label_clip_pontos'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 20)), text='Pontos (x1,y1; ...):', manager=self.ui_manager)
+        y += 22
+        self.elementos_recorte['entrada_clip_pontos'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 30)), manager=self.ui_manager)
+        self.elementos_recorte['entrada_clip_pontos'].set_text('')
+        # Campos para recorte de Linha via margens (abaixo da janela poligonal)
+        y += 40
+        # Campos para recorte de Linha via margens
         linha_alt = 35
         # left margin [preencher] [def]
         self.elementos_recorte['label_left'] = pygame_gui.elements.UILabel(
@@ -114,7 +135,7 @@ class PainelControle:
         }
         for k, v in defaults_rec.items():
             self.elementos_recorte[k].set_text(v)
-    # Interface antiga de polígono removida em favor das margens unificadas
+    # Interface antiga de polígono removida em favor das margens/polígono unificados
         for comp in self.elementos_recorte.values():
             comp.hide()
 
@@ -556,7 +577,7 @@ class PainelControle:
 
         self.lista_historico.set_item_list(lista_para_ui)
 
-        # Mostrar a interface de margens para linhas e polilinhas (unificado)
+        # Mostrar a interface de margens para linhas e a interface poligonal para polilinhas
         margin_keys = {
             'label_left','left','btn_left',
             'label_bottom','bottom','btn_bottom',
@@ -565,10 +586,18 @@ class PainelControle:
             'botao','btn_recorte'
         }
 
+        polyclip_keys = {
+            'label_clip_poly','btn_clip_iniciar','btn_clip_finalizar',
+            'label_clip_pontos','entrada_clip_pontos',
+            'botao','btn_recorte'
+        }
+
         for key, comp in self.elementos_recorte.items():
             if key == 'titulo':
                 comp.show() if (show_recorte_linha or show_recorte_poligono) else comp.hide()
             elif key in margin_keys:
-                comp.show() if (show_recorte_linha or show_recorte_poligono) else comp.hide()
+                comp.show() if show_recorte_linha else comp.hide()
+            elif key in polyclip_keys:
+                comp.show() if show_recorte_poligono else comp.hide()
             else:
                 comp.hide()

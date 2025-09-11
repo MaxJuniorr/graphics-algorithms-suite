@@ -488,8 +488,8 @@ class PainelControle:
         
 
         # Ações, Preenchimento e Módulo 3D
-        y_acoes_base = self.altura_total - 130 # Posição inicial para o bloco inferior
-        
+        y_acoes_base = self.altura_total - 80  # Posição inicial para o bloco inferior (mais embaixo)
+
         # Ações Gerais
         self.botao_desfazer = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((self.largura_canvas + 10, y_acoes_base), (180, 35)),

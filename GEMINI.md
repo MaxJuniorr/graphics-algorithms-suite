@@ -21,6 +21,7 @@ Responsável por toda a experiência do usuário. A lógica da UI é distribuíd
     - Mapear as coordenadas da grade (ex: 1, 2) para as coordenadas da tela em pixels.
     - Renderizar os pixels retornados pelos algoritmos.
     - Gerenciar o estado dos desenhos através da classe `Historico`, permitindo que formas sejam destacadas, removidas ou que ações sejam desfeitas.
+    - **Novo**: Desenhar uma janela de recorte retangular na tela quando um algoritmo de recorte é ativado.
 
 - **`painel_controle.py` (`PainelControle`)**: Constrói e gerencia todos os widgets do painel lateral. A interface é dividida em seções lógicas:
     - **Configuração da Grade**: Entradas para a resolução da grade (`Largura`, `Altura`).
@@ -30,6 +31,7 @@ Responsável por toda a experiência do usuário. A lógica da UI é distribuíd
     - **Ações Gerais**: Botões para `Limpar Tela`, `Desfazer` a última ação e `Excluir` a forma selecionada no histórico.
     - **Transformações 2D**: Controles para aplicar translação, escala e rotação ao objeto selecionado.
     - **Preenchimento**: Botões para aplicar algoritmos de preenchimento como `Scanline` e `Flood Fill`.
+    - **Recorte**: Uma nova seção que aparece dinamicamente quando uma **Linha** ou **Polilinha** é selecionada no histórico. Permite ao usuário definir uma janela de recorte (xmin, ymin, xmax, ymax) e aplicar o algoritmo de recorte correspondente.
 
 ### 2. Algoritmos (`algoritmos/`)
 
@@ -53,10 +55,23 @@ Contém a lógica pura e matemática de cada algoritmo. As funções neste pacot
     - `transladar(pontos, tx, ty)`: Translada um conjunto de pontos.
     - `escalar(pontos, sx, sy, ponto_fixo)`: Escala um conjunto de pontos em relação a um ponto fixo.
     - `rotacionar(pontos, angulo, pivo)`: Rotaciona um conjunto de pontos em torno de um pivô.
+- **`recorte.py`**:
+    - `cohen_sutherland_clip(p1, p2, xmin, ymin, xmax, ymax)`: Implementa o algoritmo de Cohen-Sutherland para recorte de linhas.
+        - **Funcionamento**: A cada ponto da linha é atribuído um "outcode" de 4 bits que identifica em qual região o ponto se encontra em relação à janela de recorte (dentro, topo, base, esquerda, direita).
+        - **Aceitação Trivial**: Se ambos os outcodes são 0, a linha está inteiramente dentro.
+        - **Rejeição Trivial**: Se o `AND` lógico de ambos os outcodes é diferente de 0, a linha está inteiramente fora da mesma região (ex: ambos acima do topo) e pode ser descartada.
+        - **Recorte**: Se nenhum dos casos acima se aplica, a linha cruza a fronteira. O algoritmo calcula o ponto de interseção com uma das arestas da janela e atualiza o ponto que estava fora, repetindo o processo até que a linha possa ser trivialmente aceita ou rejeitada.
+    - `sutherland_hodgman_clip(subject_polygon, clip_window)`: Implementa o algoritmo de Sutherland-Hodgman para recorte de polígonos.
+        - **Funcionamento**: O algoritmo processa o polígono contra cada uma das quatro arestas da janela de recorte (esquerda, direita, topo, base) sequencialmente.
+        - Para cada aresta, ele itera sobre os vértices do polígono. A cada par de vértices (uma aresta do polígono), ele avalia quatro casos possíveis:
+            1.  Ambos os vértices dentro: O segundo vértice é adicionado à lista de saída.
+            2.  Primeiro dentro, segundo fora: A interseção com a aresta da janela é calculada e adicionada à saída.
+            3.  Ambos fora: Nada é adicionado.
+            4.  Primeiro fora, segundo dentro: A interseção e o segundo vértice são adicionados à saída.
+        - A lista de vértices de saída de uma etapa se torna a entrada para a próxima, até que o polígono tenha sido recortado por todas as quatro arestas.
 
 **Algoritmos Planejados (Arquivos Vazios):**
 - `projecoes.py`
-- `recorte.py`
 
 ### 3. Utilitários (`utils/`)
 
@@ -67,18 +82,19 @@ Contém a lógica pura e matemática de cada algoritmo. As funções neste pacot
 
 ---
 
-# Fluxo de Interação
+# Fluxo de Interação (Exemplo com Recorte)
 
-O fluxo de dados, desde a entrada do usuário até a renderização, ocorre da seguinte forma:
-
-1.  O usuário insere valores nos campos do `PainelControle` (ex: coordenadas da linha) e clica no botão "Desenhar".
-2.  O `Aplicacao` detecta o evento `UI_BUTTON_PRESSED` no seu loop principal.
-3.  Ele identifica qual botão foi pressionado e lê os valores dos campos de texto correspondentes no `PainelControle`.
-4.  Chama a função apropriada do pacote `algoritmos/` (ex: `calcular_linha_bresenham`), passando os valores lidos.
-5.  A função do algoritmo processa os dados e retorna uma lista de pixels `[(x1, y1), (x2, y2), ...]`, sem saber nada sobre a tela.
-6.  O `Aplicacao` recebe essa lista e a repassa para a `AreaDesenho`.
-7.  A `AreaDesenho` adiciona os pixels a um novo `DesenhoHistorico` em sua instância da classe `Historico`.
-8.  No próximo ciclo de desenho, a `AreaDesenho` lê o histórico completo e renderiza todos os pixels na tela, traduzindo as coordenadas da grade para as posições corretas na janela.
+1.  O usuário desenha uma **Linha** ou **Polilinha**.
+2.  O usuário clica no item correspondente na lista de **Histórico de Desenhos**. O item é selecionado.
+3.  O `PainelControle` detecta a seleção e, como o item é uma Linha/Polilinha, exibe a seção de **Recorte** com os campos `xmin`, `ymin`, `xmax`, `ymax` e o botão "Aplicar".
+4.  O usuário preenche os valores da janela de recorte e clica em "Aplicar Recorte Linha" ou "Recortar Polígono".
+5.  O `Aplicacao` detecta o evento `UI_BUTTON_PRESSED`.
+6.  Ele lê os valores da janela de recorte e os parâmetros da forma selecionada no histórico.
+7.  Chama a função apropriada do pacote `algoritmos/recorte.py` (`cohen_sutherland_clip` ou `sutherland_hodgman_clip`).
+8.  A função de recorte processa os dados e retorna os novos vértices da forma recortada (ou `None`/lista vazia se foi totalmente descartada).
+9.  O `Aplicacao` atualiza os parâmetros do `DesenhoHistorico` original com os novos vértices. Se a forma foi descartada, ela é removida do histórico.
+10. Ao mesmo tempo, `Aplicacao` informa à `AreaDesenho` as dimensões da janela de recorte, que passa a desenhar um retângulo vermelho na tela para visualização.
+11. No próximo ciclo de desenho, a `AreaDesenho` renderiza a forma com suas novas coordenadas, já recortada.
 
 ---
 

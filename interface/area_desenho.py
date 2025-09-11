@@ -98,7 +98,11 @@ class AreaDesenho:
         self.historico.remover_por_indice(indice)
         self.indice_selecionado = None
 
-    def selecionar_desenho(self, indice: int):
+    def selecionar_desenho(self, indice):
+        # Permite desselecionar quando indice=None
+        if indice is None:
+            self.indice_selecionado = None
+            return
         historico = self.obter_historico()
         if 0 <= indice < len(historico):
             self.indice_selecionado = indice

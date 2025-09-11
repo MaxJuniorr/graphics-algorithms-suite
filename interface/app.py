@@ -300,12 +300,21 @@ class Aplicacao:
 
     def manipular_selecao_historico(self, evento):
         item_selecionado = evento.text
-        if not item_selecionado: self.area_desenho.selecionar_desenho(None); return
+        if not item_selecionado:
+            self.area_desenho.selecionar_desenho(None)
+            return
         try:
-            if item_selecionado.startswith('* '): item_selecionado = item_selecionado[2:]
+            if item_selecionado.startswith('* '):
+                item_selecionado = item_selecionado[2:]
             indice = int(item_selecionado.split('.')[0]) - 1
-            self.area_desenho.selecionar_desenho(indice)
-        except (ValueError, IndexError): self.area_desenho.selecionar_desenho(None)
+            # Toggle: se já está selecionado e clicar de novo, desseleciona
+            atual = self.area_desenho.obter_indice_selecionado()
+            if atual == indice:
+                self.area_desenho.selecionar_desenho(None)
+            else:
+                self.area_desenho.selecionar_desenho(indice)
+        except (ValueError, IndexError):
+            self.area_desenho.selecionar_desenho(None)
 
     def manipular_eventos_ui(self, evento):
         painel = self.painel_controle

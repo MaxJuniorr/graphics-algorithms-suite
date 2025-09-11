@@ -65,67 +65,44 @@ class PainelControle:
             relative_rect=pygame.Rect((x_hist, y_recorte), (self.largura_historico, 20)),
             text='Recorte', manager=self.ui_manager
         )
-        # Botões e entrada para janela poligonal (posicionados logo abaixo do título)
-        y = y_recorte + 25
-        self.elementos_recorte['label_clip_poly'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 20)),
-            text='Janela por clique (convexa):', manager=self.ui_manager
-        )
-        y += 25
-        btn_w, btn_h, gap = 90, 28, 10
-        start_x = x_hist + 5
-        self.elementos_recorte['btn_clip_iniciar'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((start_x, y), (btn_w, btn_h)), text='Iniciar', manager=self.ui_manager, object_id='#clip_poly_iniciar')
-        self.elementos_recorte['btn_clip_finalizar'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((start_x + btn_w + gap, y), (btn_w, btn_h)), text='Finalizar', manager=self.ui_manager, object_id='#clip_poly_finalizar')
-        y += btn_h + 8
-        self.elementos_recorte['label_clip_pontos'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 20)), text='Pontos (x1,y1; ...):', manager=self.ui_manager)
-        y += 22
-        self.elementos_recorte['entrada_clip_pontos'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 30)), manager=self.ui_manager)
-        self.elementos_recorte['entrada_clip_pontos'].set_text('-20,-20; 20,-20; 20,20; -20,20')
-        # Campos para recorte de Linha via margens (abaixo da janela poligonal)
-        y += 40
-        # Campos para recorte de Linha via margens
+        # Campos para recorte de Linha via margens (Cohen–Sutherland) — ficam logo abaixo do título
+        y_line = y_recorte + 25
         linha_alt = 35
-        # left margin [preencher] [def]
         self.elementos_recorte['label_left'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='left:', manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist, y_line), (90, 20)), text='left:', manager=self.ui_manager)
         self.elementos_recorte['left'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((x_hist + 95, y), (60, 30)), manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist + 95, y_line), (60, 30)), manager=self.ui_manager)
         self.elementos_recorte['btn_left'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((x_hist + 160, y), (40, 30)), text='Def', manager=self.ui_manager, object_id='#recorte_set_left')
-        # bottom margin [preencher] [def]
-        y += linha_alt
+            relative_rect=pygame.Rect((x_hist + 160, y_line), (40, 30)), text='Def', manager=self.ui_manager, object_id='#recorte_set_left')
+        y_line += linha_alt
         self.elementos_recorte['label_bottom'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='bottom:', manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist, y_line), (90, 20)), text='bottom:', manager=self.ui_manager)
         self.elementos_recorte['bottom'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((x_hist + 95, y), (60, 30)), manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist + 95, y_line), (60, 30)), manager=self.ui_manager)
         self.elementos_recorte['btn_bottom'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((x_hist + 160, y), (40, 30)), text='Def', manager=self.ui_manager, object_id='#recorte_set_bottom')
-        # right margin [preencher] [def]
-        y += linha_alt
+            relative_rect=pygame.Rect((x_hist + 160, y_line), (40, 30)), text='Def', manager=self.ui_manager, object_id='#recorte_set_bottom')
+        y_line += linha_alt
         self.elementos_recorte['label_right'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='right:', manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist, y_line), (90, 20)), text='right:', manager=self.ui_manager)
         self.elementos_recorte['right'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((x_hist + 95, y), (60, 30)), manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist + 95, y_line), (60, 30)), manager=self.ui_manager)
         self.elementos_recorte['btn_right'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((x_hist + 160, y), (40, 30)), text='Def', manager=self.ui_manager, object_id='#recorte_set_right')
-        # top margin [preencher] [def]
-        y += linha_alt
+            relative_rect=pygame.Rect((x_hist + 160, y_line), (40, 30)), text='Def', manager=self.ui_manager, object_id='#recorte_set_right')
+        y_line += linha_alt
         self.elementos_recorte['label_top'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((x_hist, y), (90, 20)), text='top:', manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist, y_line), (90, 20)), text='top:', manager=self.ui_manager)
         self.elementos_recorte['top'] = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((x_hist + 95, y), (60, 30)), manager=self.ui_manager)
+            relative_rect=pygame.Rect((x_hist + 95, y_line), (60, 30)), manager=self.ui_manager)
         self.elementos_recorte['btn_top'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((x_hist + 160, y), (40, 30)), text='Def', manager=self.ui_manager, object_id='#recorte_set_top')
-        # Botão Aplicar
-        y += 40
+            relative_rect=pygame.Rect((x_hist + 160, y_line), (40, 30)), text='Def', manager=self.ui_manager, object_id='#recorte_set_top')
+        y_line += 40
         botao_recorte_linha = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 30)),
+            relative_rect=pygame.Rect((x_hist, y_line), (self.largura_historico, 30)),
             text='Aplicar Recorte', manager=self.ui_manager, object_id='#botao_recorte'
         )
+
+        # Botões e entrada para janela poligonal (Sutherland–Hodgman), ancorados sob o título
+        self._construir_recorte_poligonal(x_hist, y_recorte)
         # Registrar botão com duas chaves para compatibilidade
         self.elementos_recorte['botao'] = botao_recorte_linha
         self.elementos_recorte['btn_recorte'] = botao_recorte_linha
@@ -135,7 +112,7 @@ class PainelControle:
         }
         for k, v in defaults_rec.items():
             self.elementos_recorte[k].set_text(v)
-    # Interface antiga de polígono removida em favor das margens/polígono unificados
+        # Interface antiga de polígono removida em favor das margens/polígono unificados
         for comp in self.elementos_recorte.values():
             comp.hide()
 
@@ -526,6 +503,30 @@ class PainelControle:
             relative_rect=pygame.Rect((self.largura_canvas + 10, self.altura_total - 50), (180, 35)),
             text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
 
+    def _construir_recorte_poligonal(self, x_hist: int, y_recorte: int) -> None:
+        """Cria os controles de janela poligonal (convexa) para Sutherland–Hodgman,
+        ancorados imediatamente abaixo do título de Recorte.
+        """
+        y = y_recorte + 25
+        self.elementos_recorte['label_clip_poly'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 20)),
+            text='Janela por clique (convexa):', manager=self.ui_manager
+        )
+        y += 25
+        btn_w, btn_h, gap = 90, 28, 10
+        start_x = x_hist + 5
+        self.elementos_recorte['btn_clip_iniciar'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((start_x, y), (btn_w, btn_h)), text='Iniciar', manager=self.ui_manager, object_id='#clip_poly_iniciar')
+        self.elementos_recorte['btn_clip_finalizar'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((start_x + btn_w + gap, y), (btn_w, btn_h)), text='Finalizar', manager=self.ui_manager, object_id='#clip_poly_finalizar')
+        y += btn_h + 8
+        self.elementos_recorte['label_clip_pontos'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 20)), text='Pontos (x1,y1; ...):', manager=self.ui_manager)
+        y += 22
+        self.elementos_recorte['entrada_clip_pontos'] = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((x_hist, y), (self.largura_historico, 30)), manager=self.ui_manager)
+        self.elementos_recorte['entrada_clip_pontos'].set_text('-20,-20; 20,-20; 20,20; -20,20')
+
     def mostrar_elementos_figura(self, figura):
         for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo, self.elementos_quadrilatero, self.elementos_pentagono, self.elementos_hexagono]:
             for comp in grupo.values():
@@ -588,8 +589,7 @@ class PainelControle:
 
         polyclip_keys = {
             'label_clip_poly','btn_clip_iniciar','btn_clip_finalizar',
-            'label_clip_pontos','entrada_clip_pontos',
-            'botao','btn_recorte'
+            'label_clip_pontos','entrada_clip_pontos'
         }
 
         for key, comp in self.elementos_recorte.items():

@@ -472,18 +472,17 @@ class Aplicacao:
                 ymax = int(painel.elementos_recorte['ymax'].get_text())
                 
                 clip_window = (xmin, ymin, xmax, ymax)
+                self.area_desenho.definir_janela_recorte(clip_window)
                 subject_polygon = desenho.parametros['pontos']
                 
                 clipped_polygon = sutherland_hodgman_clip(subject_polygon, clip_window)
                 
                 if clipped_polygon:
-                    self.area_desenho.adicionar_forma("Polilinha", {'pontos': clipped_polygon})
+                    desenho.parametros['pontos'] = clipped_polygon
                     print("Polígono recortado com sucesso.")
                 else:
-                    # O polígono pode ser totalmente recortado, resultando em 0 vértices.
-                    # Nesse caso, não fazemos nada, ou podemos remover o original.
-                    # Por enquanto, vamos apenas informar.
-                    print("Polígono completamente fora da área de recorte.")
+                    self.area_desenho.remover_desenho_indice(indice_selecionado)
+                    print("Polígono completamente fora da área de recorte. Removido.")
 
             except ValueError: print("Erro nos parâmetros de recorte.")
 

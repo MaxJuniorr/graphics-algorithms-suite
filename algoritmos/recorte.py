@@ -82,3 +82,109 @@ def cohen_sutherland_clip(p1, p2, xmin, ymin, xmax, ymax):
     if accept:
         return ((x1, y1), (x2, y2))
     return None
+
+def sutherland_hodgman_clip(subject_polygon, clip_window):
+    """
+    Recorta um polígono usando o algoritmo de Sutherland-Hodgman.
+
+    Args:
+        subject_polygon (list): Lista de vértices do polígono a ser recortado.
+        clip_window (tuple): Tupla (xmin, ymin, xmax, ymax) da janela de recorte.
+
+    Returns:
+        list: Lista de vértices do polígono recortado.
+    """
+    xmin, ymin, xmax, ymax = clip_window
+    
+    def clip_left(vertices):
+        clipped = []
+        for i in range(len(vertices)):
+            p1 = vertices[i]
+            p2 = vertices[(i + 1) % len(vertices)]
+            p1_inside = p1[0] >= xmin
+            p2_inside = p2[0] >= xmin
+
+            if p1_inside and p2_inside: # Ambos dentro
+                clipped.append(p2)
+            elif p1_inside and not p2_inside: # P1 dentro, P2 fora
+                # Interseção
+                x = xmin
+                y = p1[1] + (p2[1] - p1[1]) * (xmin - p1[0]) / (p2[0] - p1[0])
+                clipped.append((round(x), round(y)))
+            elif not p1_inside and p2_inside: # P1 fora, P2 dentro
+                # Interseção
+                x = xmin
+                y = p1[1] + (p2[1] - p1[1]) * (xmin - p1[0]) / (p2[0] - p1[0])
+                clipped.append((round(x), round(y)))
+                clipped.append(p2)
+        return clipped
+
+    def clip_right(vertices):
+        clipped = []
+        for i in range(len(vertices)):
+            p1 = vertices[i]
+            p2 = vertices[(i + 1) % len(vertices)]
+            p1_inside = p1[0] <= xmax
+            p2_inside = p2[0] <= xmax
+
+            if p1_inside and p2_inside:
+                clipped.append(p2)
+            elif p1_inside and not p2_inside:
+                x = xmax
+                y = p1[1] + (p2[1] - p1[1]) * (xmax - p1[0]) / (p2[0] - p1[0])
+                clipped.append((round(x), round(y)))
+            elif not p1_inside and p2_inside:
+                x = xmax
+                y = p1[1] + (p2[1] - p1[1]) * (xmax - p1[0]) / (p2[0] - p1[0])
+                clipped.append((round(x), round(y)))
+                clipped.append(p2)
+        return clipped
+
+    def clip_bottom(vertices):
+        clipped = []
+        for i in range(len(vertices)):
+            p1 = vertices[i]
+            p2 = vertices[(i + 1) % len(vertices)]
+            p1_inside = p1[1] >= ymin
+            p2_inside = p2[1] >= ymin
+
+            if p1_inside and p2_inside:
+                clipped.append(p2)
+            elif p1_inside and not p2_inside:
+                y = ymin
+                x = p1[0] + (p2[0] - p1[0]) * (ymin - p1[1]) / (p2[1] - p1[1])
+                clipped.append((round(x), round(y)))
+            elif not p1_inside and p2_inside:
+                y = ymin
+                x = p1[0] + (p2[0] - p1[0]) * (ymin - p1[1]) / (p2[1] - p1[1])
+                clipped.append((round(x), round(y)))
+                clipped.append(p2)
+        return clipped
+
+    def clip_top(vertices):
+        clipped = []
+        for i in range(len(vertices)):
+            p1 = vertices[i]
+            p2 = vertices[(i + 1) % len(vertices)]
+            p1_inside = p1[1] <= ymax
+            p2_inside = p2[1] <= ymax
+
+            if p1_inside and p2_inside:
+                clipped.append(p2)
+            elif p1_inside and not p2_inside:
+                y = ymax
+                x = p1[0] + (p2[0] - p1[0]) * (ymax - p1[1]) / (p2[1] - p1[1])
+                clipped.append((round(x), round(y)))
+            elif not p1_inside and p2_inside:
+                y = ymax
+                x = p1[0] + (p2[0] - p1[0]) * (ymax - p1[1]) / (p2[1] - p1[1])
+                clipped.append((round(x), round(y)))
+                clipped.append(p2)
+        return clipped
+
+    clipped_polygon = clip_left(subject_polygon)
+    clipped_polygon = clip_right(clipped_polygon)
+    clipped_polygon = clip_bottom(clipped_polygon)
+    clipped_polygon = clip_top(clipped_polygon)
+
+    return clipped_polygon

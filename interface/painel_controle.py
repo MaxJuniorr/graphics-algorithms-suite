@@ -68,7 +68,8 @@ class PainelControle:
         self.elementos_recorte['ymin'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico + 50, y_recorte + 30), (45, 30)), manager=self.ui_manager)
         self.elementos_recorte['xmax'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico + 100, y_recorte + 30), (45, 30)), manager=self.ui_manager)
         self.elementos_recorte['ymax'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.posicao_x_historico + 150, y_recorte + 30), (45, 30)), manager=self.ui_manager)
-        self.elementos_recorte['btn_recorte'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte + 70), (self.largura_historico, 30)), text='Aplicar Recorte', manager=self.ui_manager, object_id='#recorte_aplicar')
+        self.elementos_recorte['btn_recorte'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte + 70), (self.largura_historico, 30)), text='Aplicar Recorte Linha', manager=self.ui_manager, object_id='#recorte_aplicar')
+        self.elementos_recorte['btn_recorte_poligono'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.posicao_x_historico, y_recorte + 110), (self.largura_historico, 30)), text='Recortar Polígono', manager=self.ui_manager, object_id='#recorte_poligono_aplicar')
         self.elementos_recorte['xmin'].set_text('-20')
         self.elementos_recorte['ymin'].set_text('-20')
         self.elementos_recorte['xmax'].set_text('20')
@@ -488,18 +489,27 @@ class PainelControle:
         self._historico_cache_str = assinatura_completa
 
         lista_para_ui = []
-        show_recorte = False
+        show_recorte_linha = False
+        show_recorte_poligono = False
+        if indice_selecionado is not None and 0 <= indice_selecionado < len(historico):
+            desenho_selecionado = historico[indice_selecionado]
+            if desenho_selecionado.tipo == 'Linha (Bresenham)':
+                show_recorte_linha = True
+            elif desenho_selecionado.tipo == 'Polilinha':
+                show_recorte_poligono = True
+
         for i, desenho in enumerate(historico):
             prefixo = "* " if i == indice_selecionado else ""
             lista_para_ui.append(f"{prefixo}{i+1}. {desenho.tipo}")
-            if i == indice_selecionado and desenho.tipo == 'Linha (Bresenham)':
-                show_recorte = True
 
         self.lista_historico.set_item_list(lista_para_ui)
 
-        if show_recorte:
-            for comp in self.elementos_recorte.values():
-                comp.show()
-        else:
-            for comp in self.elementos_recorte.values():
-                comp.hide()
+        show_base_recorte = show_recorte_linha or show_recorte_poligono
+
+        for key, comp in self.elementos_recorte.items():
+            if key in ['btn_recorte']:
+                comp.show() if show_recorte_linha else comp.hide()
+            elif key in ['btn_recorte_poligono']:
+                comp.show() if show_recorte_poligono else comp.hide()
+            else:
+                comp.show() if show_base_recorte else comp.hide()

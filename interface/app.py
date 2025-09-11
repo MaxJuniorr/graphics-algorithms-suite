@@ -8,7 +8,7 @@ from algoritmos.circulo_elipse import calcular_circulo, calcular_elipse
 from algoritmos.curvas_bezier import rasterizar_curva_bezier
 from algoritmos.polilinha import rasterizar_polilinha
 from algoritmos.preenchimento import preencher_scanline, preencher_recursao, preencher_flood_canvas, preencher_scanline_multi
-from algoritmos.recorte import cohen_sutherland_clip
+from algoritmos.recorte import cohen_sutherland_clip, sutherland_hodgman_clip
 import algoritmos.transformacoes as transform
 
 # --- Constantes de Layout ---
@@ -457,6 +457,34 @@ class Aplicacao:
                 else:
                     self.area_desenho.remover_desenho_indice(indice_selecionado)
                     print("Linha completamente fora da área de recorte. Removida.")
+            except ValueError: print("Erro nos parâmetros de recorte.")
+
+        elif evento.ui_element == painel.elementos_recorte.get('btn_recorte_poligono'):
+            indice_selecionado = self.area_desenho.obter_indice_selecionado()
+            if indice_selecionado is None: print("Nenhum objeto selecionado."); return
+            desenho = self.area_desenho.obter_historico()[indice_selecionado]
+            if desenho.tipo != "Polilinha":
+                print("Recorte de polígono disponível apenas para Polilinhas."); return
+            try:
+                xmin = int(painel.elementos_recorte['xmin'].get_text())
+                ymin = int(painel.elementos_recorte['ymin'].get_text())
+                xmax = int(painel.elementos_recorte['xmax'].get_text())
+                ymax = int(painel.elementos_recorte['ymax'].get_text())
+                
+                clip_window = (xmin, ymin, xmax, ymax)
+                subject_polygon = desenho.parametros['pontos']
+                
+                clipped_polygon = sutherland_hodgman_clip(subject_polygon, clip_window)
+                
+                if clipped_polygon:
+                    self.area_desenho.adicionar_forma("Polilinha", {'pontos': clipped_polygon})
+                    print("Polígono recortado com sucesso.")
+                else:
+                    # O polígono pode ser totalmente recortado, resultando em 0 vértices.
+                    # Nesse caso, não fazemos nada, ou podemos remover o original.
+                    # Por enquanto, vamos apenas informar.
+                    print("Polígono completamente fora da área de recorte.")
+
             except ValueError: print("Erro nos parâmetros de recorte.")
 
         elif evento.ui_element == painel.elementos_transformacao.get('btn_preencher_scan'):

@@ -396,22 +396,83 @@ class Aplicacao:
                 print("Falha ao projetar os vértices.")
                 return
 
-            todos_os_pixels = []
-            for i1, i2 in arestas:
-                try:
-                    p1 = vertices_2d[i1]
-                    p2 = vertices_2d[i2]
-                    pixels_aresta = calcular_linha_bresenham(p1, p2)
-                    todos_os_pixels.extend(pixels_aresta)
-                except IndexError:
-                    print(f"Erro: Índice de aresta inválido ({i1} ou {i2}) para a lista de vértices (tamanho {len(vertices_2d)}).")
-                    # Interrompe o desenho para evitar mais erros
+            # Constrói uma cadeia contínua que percorre todas as arestas (pode repetir vértices/arestas)
+            # para representar a projeção inteira como uma única Polilinha.
+            try:
+                n = len(vertices_2d)
+                adj = {i: set() for i in range(n)}
+                unused = set()
+                for (a, b) in arestas:
+                    if a < 0 or b < 0 or a >= n or b >= n:
+                        raise IndexError(f"Aresta inválida ({a},{b}) para {n} vértices 2D")
+                    adj[a].add(b)
+                    adj[b].add(a)
+                    key = (min(a, b), max(a, b))
+                    unused.add(key)
+
+                # Encontra um vértice de início com alguma aresta
+                start = next((i for i in range(n) if adj[i]), None)
+                if start is None:
+                    print("Sólido sem arestas projetadas.")
                     return
-            
-            if todos_os_pixels:
-                nome_forma = f"Projeção {tipo_projecao}"
-                self.area_desenho.adicionar_forma(nome_forma, {'pontos': todos_os_pixels})
-                print(f"'{nome_forma}' desenhada com sucesso.")
+
+                from collections import deque
+
+                def bfs_to_vertex_with_unused_edge(src):
+                    """Encontra caminho por vértices de src até algum vértice com aresta não usada."""
+                    q = deque([src])
+                    prev = {src: None}
+                    target = None
+                    while q:
+                        v = q.popleft()
+                        # Verifica se v possui alguma aresta não usada
+                        has_unused = any((min(v, u), max(v, u)) in unused for u in adj[v])
+                        if has_unused:
+                            target = v
+                            break
+                        for u in adj[v]:
+                            if u not in prev:
+                                prev[u] = v
+                                q.append(u)
+                    if target is None:
+                        return []
+                    # Reconstrói caminho
+                    path = []
+                    cur = target
+                    while cur is not None:
+                        path.append(cur)
+                        cur = prev[cur]
+                    path.reverse()
+                    return path  # lista de índices de vértices
+
+                chain_indices = [start]
+                cur = start
+                while unused:
+                    # Se não há aresta não usada partindo de cur, anda até uma que tenha
+                    if not any((min(cur, u), max(cur, u)) in unused for u in adj[cur]):
+                        path = bfs_to_vertex_with_unused_edge(cur)
+                        if not path:
+                            break
+                        # já estamos em cur, então adiciona do segundo em diante
+                        for v in path[1:]:
+                            chain_indices.append(v)
+                        cur = chain_indices[-1]
+                        continue
+                    # Usa uma aresta não usada e avança
+                    # Escolhe um vizinho com aresta não usada
+                    nxt = next(u for u in adj[cur] if (min(cur, u), max(cur, u)) in unused)
+                    unused.discard((min(cur, nxt), max(cur, nxt)))
+                    chain_indices.append(nxt)
+                    cur = nxt
+
+                chain_points = [vertices_2d[i] for i in chain_indices]
+                if len(chain_points) >= 2:
+                    self.area_desenho.adicionar_forma("Polilinha", {'pontos': chain_points})
+                    print(f"Projeção {tipo_projecao}: cadeia única com {len(chain_points)-1} segmentos.")
+                else:
+                    print("Projeção resultou em cadeia insuficiente para desenhar.")
+            except Exception as e:
+                print(f"Erro ao montar polilinha única: {e}")
         
         # --- Lógica de Desenho ---
         elif evento.ui_element == painel.elementos_linha.get('botao'):

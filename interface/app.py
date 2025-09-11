@@ -108,6 +108,26 @@ class Aplicacao:
                     if evento.ui_element == self.painel_controle.lista_historico:
                         self.manipular_selecao_historico(evento)
             self.painel_controle.atualizar_historico(self.area_desenho.obter_historico(), self.area_desenho.obter_indice_selecionado())
+            # Atualiza a janela de recorte (retângulo vermelho) a cada frame, se uma linha estiver selecionada
+            try:
+                idx = self.area_desenho.obter_indice_selecionado()
+                if idx is not None:
+                    d = self.area_desenho.obter_historico()[idx]
+                    if d.tipo == "Linha (Bresenham)":
+                        left = int(self.painel_controle.elementos_recorte['left'].get_text())
+                        bottom = int(self.painel_controle.elementos_recorte['bottom'].get_text())
+                        right = int(self.painel_controle.elementos_recorte['right'].get_text())
+                        top = int(self.painel_controle.elementos_recorte['top'].get_text())
+                        xmin, xmax = sorted([left, right])
+                        ymin, ymax = sorted([bottom, top])
+                        self.area_desenho.definir_janela_recorte((xmin, ymin, xmax, ymax))
+                    else:
+                        self.area_desenho.limpar_janela_recorte()
+                else:
+                    self.area_desenho.limpar_janela_recorte()
+            except Exception:
+                # Em caso de valores inválidos, não desenha a janela nesse frame
+                self.area_desenho.limpar_janela_recorte()
             self.ui_manager.update(delta_time)
             self.area_desenho.desenhar(self.tela)
             pygame.draw.rect(self.tela, COR_PAINEL, (LARGURA_CANVAS, 0, LARGURA_PAINEL, ALTURA_TOTAL))
@@ -197,6 +217,15 @@ class Aplicacao:
         elif tipo_figura == 'hexagono':
             self.painel_controle.elementos_hexagono[f'{ponto}_x'].set_text(x_str)
             self.painel_controle.elementos_hexagono[f'{ponto}_y'].set_text(y_str)
+        elif tipo_figura == 'recorte':
+            # Campos de margem: left/right usam X; bottom/top usam Y
+            try:
+                if ponto in ('left', 'right'):
+                    self.painel_controle.elementos_recorte[ponto].set_text(x_str)
+                elif ponto in ('bottom', 'top'):
+                    self.painel_controle.elementos_recorte[ponto].set_text(y_str)
+            except KeyError:
+                pass
         elif tipo_figura == 'flood':
             # Flood fill livre no canvas: preenche região vazia conectada à seed
             seed = (coords[0], coords[1])
@@ -435,29 +464,38 @@ class Aplicacao:
                     self._atualizar_vertices_desenho(desenho, novos_pontos)
             except ValueError: print("Erro nos parâmetros de rotação.")
 
-        elif evento.ui_element == painel.elementos_recorte.get('btn_recorte'):
+        elif evento.ui_element == painel.elementos_recorte.get('botao'):
             indice_selecionado = self.area_desenho.obter_indice_selecionado()
-            if indice_selecionado is None: print("Nenhum objeto selecionado."); return
+            if indice_selecionado is None:
+                print("Nenhum objeto selecionado."); return
             desenho = self.area_desenho.obter_historico()[indice_selecionado]
             if desenho.tipo != "Linha (Bresenham)":
                 print("Recorte disponível apenas para linhas."); return
             try:
-                xmin = int(painel.elementos_recorte['xmin'].get_text())
-                ymin = int(painel.elementos_recorte['ymin'].get_text())
-                xmax = int(painel.elementos_recorte['xmax'].get_text())
-                ymax = int(painel.elementos_recorte['ymax'].get_text())
+                # Janela a partir das margens
+                left = int(painel.elementos_recorte['left'].get_text())
+                bottom = int(painel.elementos_recorte['bottom'].get_text())
+                right = int(painel.elementos_recorte['right'].get_text())
+                top = int(painel.elementos_recorte['top'].get_text())
+                xmin, xmax = sorted([left, right])
+                ymin, ymax = sorted([bottom, top])
 
+                # Segmento atual da linha selecionada
                 p1 = desenho.parametros['p1']
                 p2 = desenho.parametros['p2']
-                self.area_desenho.definir_janela_recorte((xmin, ymin, xmax, ymax))
+
                 resultado = cohen_sutherland_clip(p1, p2, xmin, ymin, xmax, ymax)
                 if resultado:
                     desenho.parametros['p1'], desenho.parametros['p2'] = resultado
+                    # Mantém a janela desenhada atualizada
+                    self.area_desenho.definir_janela_recorte((xmin, ymin, xmax, ymax))
                     print("Linha recortada com sucesso.")
                 else:
                     self.area_desenho.remover_desenho_indice(indice_selecionado)
+                    self.area_desenho.limpar_janela_recorte()
                     print("Linha completamente fora da área de recorte. Removida.")
-            except ValueError: print("Erro nos parâmetros de recorte.")
+            except ValueError:
+                print("Erro nos parâmetros de recorte.")
 
         elif evento.ui_element == painel.elementos_transformacao.get('btn_preencher_scan'):
             # Preenche via Scanline: suporta Polilinha, Círculo e Elipse.
@@ -543,6 +581,21 @@ class Aplicacao:
                 painel.elementos_hexagono.get('btn_p6'): 'p6',
             }
             self.proximo_clique_define = ('hexagono', btn_map_h[evento.ui_element])
+        # Botões Def específicos do recorte (margens)
+        elif evento.ui_element in [
+            painel.elementos_recorte.get('btn_left'),
+            painel.elementos_recorte.get('btn_bottom'),
+            painel.elementos_recorte.get('btn_right'),
+            painel.elementos_recorte.get('btn_top')
+        ]:
+            btn_map_r = {
+                painel.elementos_recorte.get('btn_left'): 'left',
+                painel.elementos_recorte.get('btn_bottom'): 'bottom',
+                painel.elementos_recorte.get('btn_right'): 'right',
+                painel.elementos_recorte.get('btn_top'): 'top',
+            }
+            campo = btn_map_r[evento.ui_element]
+            self.proximo_clique_define = ('recorte', campo)
         elif evento.ui_element == painel.botao_limpar: self.area_desenho.limpar_pixels()
         elif evento.ui_element == painel.botao_desfazer: self.area_desenho.desfazer_ultimo_desenho()
         elif evento.ui_element == painel.botao_excluir_selecao:

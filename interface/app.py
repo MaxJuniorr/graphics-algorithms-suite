@@ -493,6 +493,46 @@ class Aplicacao:
             print("Clique no canvas para adicionar vértices. Clique em 'Finalizar' para concluir.")
             # Limpa a pré-visualização até que pontos sejam adicionados
             self.area_desenho.limpar_preview_polilinha()
+        elif evento.ui_element == painel.elementos_polilinha.get('btn_usar_predef'):
+            # Gera uma polilinha regular centrada conforme a escolha
+            try:
+                opc = painel.elementos_polilinha['dropdown_predef'].selected_option
+                if isinstance(opc, tuple):
+                    opc = opc[0]
+            except Exception:
+                opc = 'Triângulo'
+
+            lados_map = {
+                'Triângulo': 3,
+                'Quadrilátero': 4,
+                'Pentágono': 5,
+                'Hexágono': 6,
+            }
+            n = lados_map.get(opc, 3)
+            # Define um "raio" baseado na grade para caber na tela
+            rx = max(8, min(40, self.area_desenho.largura_grid // 6))
+            ry = max(8, min(40, self.area_desenho.altura_grid // 6))
+            r = min(rx, ry)
+            cx, cy = 0, 0
+            import math
+            pontos = []
+            # Orientação: polígono com um vértice para cima (ângulo -90º)
+            ang0 = -math.pi / 2
+            for i in range(n):
+                ang = ang0 + 2 * math.pi * i / n
+                x = round(cx + r * math.cos(ang))
+                y = round(cy + r * math.sin(ang))
+                pontos.append((x, y))
+            # fecha a cadeia para facilitar testes
+            if pontos and pontos[0] != pontos[-1]:
+                pontos.append(pontos[0])
+            # Atualiza campo de texto e preview
+            try:
+                texto = '; '.join(f"{x},{y}" for x, y in pontos)
+                painel.elementos_polilinha['entrada_pontos'].set_text(texto)
+            except Exception:
+                pass
+            self.area_desenho.definir_preview_polilinha(pontos if len(pontos) >= 2 else None)
         elif evento.ui_element == painel.elementos_polilinha.get('btn_finalizar_clique'):
             if len(self.polilinha_pontos) < 2:
                 print("Polilinha por clique requer pelo menos 2 pontos.")

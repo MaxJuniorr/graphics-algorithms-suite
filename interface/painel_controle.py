@@ -156,7 +156,7 @@ class PainelControle:
             manager=self.ui_manager
         )
         self.seletor_figura = pygame_gui.elements.UIDropDownMenu(
-            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha', 'Triângulo', 'Quadrilátero', 'Pentágono', 'Hexágono'],
+            options_list=['Linha (Bresenham)', 'Círculo', 'Curva de Bézier', 'Elipse', 'Polilinha'],
             starting_option='Linha (Bresenham)',
             relative_rect=pygame.Rect((self.largura_canvas + 10, 210), (180, 30)),
             manager=self.ui_manager
@@ -276,7 +276,7 @@ class PainelControle:
 
     # (Removido) Recorte duplicado no bloco principal — substituído pelo painel de margens acima
 
-        # --- Quadrilátero (por 4 pontos) ---
+    # --- Quadrilátero (por 4 pontos) ---
         self.elementos_quadrilatero['label_p1'] = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (30, 20)), text='P1:', manager=self.ui_manager)
         self.elementos_quadrilatero['p1_x'] = pygame_gui.elements.UITextEntryLine(
@@ -417,6 +417,23 @@ class PainelControle:
         for k, v in defaults_hex.items():
             self.elementos_hexagono[k].set_text(v)
 
+        # --- Polilinha: Predefinidas (abaixo dos controles de polilinha) ---
+        predef_y = base_y + 185
+        self.elementos_polilinha['label_predef'] = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y), (220, 20)),
+            text='Polilinha Predefinida:', manager=self.ui_manager
+        )
+        self.elementos_polilinha['dropdown_predef'] = pygame_gui.elements.UIDropDownMenu(
+            options_list=['Triângulo', 'Quadrilátero', 'Pentágono', 'Hexágono'],
+            starting_option='Triângulo',
+            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y + 25), (210, 30)),
+            manager=self.ui_manager
+        )
+        self.elementos_polilinha['btn_usar_predef'] = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, predef_y + 60), (210, 30)),
+            text='Usar predefinida', manager=self.ui_manager, object_id='#polilinha_usar_predef'
+        )
+
         # --- Transformações 2D ---
         base_y_transf = 500
         pygame_gui.elements.UILabel(
@@ -539,11 +556,7 @@ class PainelControle:
             'Círculo': self.elementos_circulo,
             'Curva de Bézier': self.elementos_bezier,
             'Elipse': self.elementos_elipse,
-            'Polilinha': self.elementos_polilinha,
-            'Triângulo': self.elementos_triangulo,
-            'Quadrilátero': self.elementos_quadrilatero,
-            'Pentágono': self.elementos_pentagono,
-            'Hexágono': self.elementos_hexagono
+            'Polilinha': self.elementos_polilinha
         }.get(figura, {})
         for comp in mapping.values():
             comp.show()

@@ -2,6 +2,7 @@ import math
 import pygame
 import pygame_gui
 from interface.painel_controle import PainelControle
+from interface.painel_projecoes import PainelProjecoes
 from interface.area_desenho import AreaDesenho
 from algoritmos.bresenham import calcular_linha_bresenham
 from algoritmos.circulo_elipse import calcular_circulo, calcular_elipse
@@ -9,6 +10,10 @@ from algoritmos.curvas_bezier import rasterizar_curva_bezier
 from algoritmos.polilinha import rasterizar_polilinha
 from algoritmos.preenchimento import preencher_scanline, preencher_recursao, preencher_flood_canvas, preencher_scanline_multi
 from algoritmos.recorte import cohen_sutherland_clip, sutherland_hodgman_clip, suth_hodgman_clip_convexo
+from algoritmos.projecoes import (
+    obter_cubo_padrao, obter_arestas_cubo, projecao_ortogonal,
+    projecao_cavalier, projecao_cabinet, projecao_perspectiva
+)
 from utils.geometria import eh_convexo
 import algoritmos.transformacoes as transform
 
@@ -36,6 +41,7 @@ class Aplicacao:
         # Captura de janela de recorte poligonal (convexa)
         self.clip_poly_capturando = False
         self.clip_poly_pontos = []
+        self.painel_projecoes = None
 
     def _vertices_para_preenchimento(self, desenho, num_segmentos: int = 72):
         """Retorna uma lista de vértices inteiros que define um polígono fechado
@@ -125,6 +131,18 @@ class Aplicacao:
                                 self.area_desenho.limpar_preview_polilinha()
                         else:
                             self.area_desenho.limpar_preview_polilinha()
+                
+                    if self.painel_projecoes is not None and evento.ui_element == self.painel_projecoes.seletor_solido:
+                        if evento.text == 'Poliedro (Vértices)':
+                            self.painel_projecoes.label_vertices.show()
+                            self.painel_projecoes.entrada_vertices.show()
+                            self.painel_projecoes.label_arestas.show()
+                            self.painel_projecoes.entrada_arestas.show()
+                        else: # 'Cubo'
+                            self.painel_projecoes.label_vertices.hide()
+                            self.painel_projecoes.entrada_vertices.hide()
+                            self.painel_projecoes.label_arestas.hide()
+                            self.painel_projecoes.entrada_arestas.hide()
                 elif evento.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
                     if evento.ui_element == self.painel_controle.lista_historico:
                         self.manipular_selecao_historico(evento)
@@ -322,6 +340,78 @@ class Aplicacao:
             try:
                 self.area_desenho.atualizar_resolucao_grid(int(painel.entrada_largura.get_text()), int(painel.entrada_altura.get_text()))
             except ValueError: print("Erro: A resolução deve ser um número inteiro.")
+        elif hasattr(painel, 'botao_projecoes') and evento.ui_element == painel.botao_projecoes:
+            if self.painel_projecoes is None or not self.painel_projecoes.alive():
+                self.painel_projecoes = PainelProjecoes(self.ui_manager, LARGURA_CANVAS)
+            else:
+                self.painel_projecoes.focus()
+        elif self.painel_projecoes is not None and evento.ui_element == self.painel_projecoes.botao_desenhar:
+            if self.painel_projecoes is None or not self.painel_projecoes.alive():
+                return  # Painel não está visível
+
+            # A opção selecionada é uma tupla (texto, id), então pegamos o primeiro elemento
+            tipo_solido = self.painel_projecoes.seletor_solido.selected_option[0]
+            tipo_projecao = self.painel_projecoes.seletor_projecao.selected_option[0]
+
+            vertices_3d = []
+            arestas = []
+
+            if tipo_solido == 'Cubo':
+                vertices_3d = obter_cubo_padrao(escala=25)
+                arestas = obter_arestas_cubo()
+            elif tipo_solido == 'Poliedro (Vértices)':
+                try:
+                    v_str = self.painel_projecoes.entrada_vertices.get_text()
+                    vertices_3d = [tuple(map(int, p.split(','))) for p in v_str.split(';') if p.strip()]
+                    
+                    a_str = self.painel_projecoes.entrada_arestas.get_text()
+                    arestas = [tuple(map(int, p.split(','))) for p in a_str.split(';') if p.strip()]
+
+                    if not vertices_3d or not arestas:
+                        print("Erro: Vértices ou arestas do poliedro personalizado estão vazios.")
+                        return
+                except (ValueError, IndexError) as e:
+                    print(f"Erro de formato para vértices ou arestas: {e}. Use x,y,z;... e i1,i2;...")
+                    return
+            
+            if not vertices_3d:
+                print("Sólido não reconhecido ou sem vértices.")
+                return
+
+            vertices_2d = []
+            try:
+                if tipo_projecao == 'Ortogonal':
+                    vertices_2d = projecao_ortogonal(vertices_3d, plano='frontal')
+                elif tipo_projecao == 'Cavalier':
+                    vertices_2d = projecao_cavalier(vertices_3d, angulo_graus=45)
+                elif tipo_projecao == 'Cabinet':
+                    vertices_2d = projecao_cabinet(vertices_3d, angulo_graus=45)
+                elif tipo_projecao == 'Perspectiva':
+                    vertices_2d = projecao_perspectiva(vertices_3d, d=100)
+            except Exception as e:
+                print(f"Erro ao calcular projeção: {e}")
+                return
+
+            if not vertices_2d:
+                print("Falha ao projetar os vértices.")
+                return
+
+            todos_os_pixels = []
+            for i1, i2 in arestas:
+                try:
+                    p1 = vertices_2d[i1]
+                    p2 = vertices_2d[i2]
+                    pixels_aresta = calcular_linha_bresenham(p1, p2)
+                    todos_os_pixels.extend(pixels_aresta)
+                except IndexError:
+                    print(f"Erro: Índice de aresta inválido ({i1} ou {i2}) para a lista de vértices (tamanho {len(vertices_2d)}).")
+                    # Interrompe o desenho para evitar mais erros
+                    return
+            
+            if todos_os_pixels:
+                nome_forma = f"Projeção {tipo_projecao}"
+                self.area_desenho.adicionar_forma(nome_forma, {'pontos': todos_os_pixels})
+                print(f"'{nome_forma}' desenhada com sucesso.")
         
         # --- Lógica de Desenho ---
         elif evento.ui_element == painel.elementos_linha.get('botao'):

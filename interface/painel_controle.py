@@ -21,6 +21,7 @@ class PainelControle:
         self.elementos_hexagono = {}
         self.elementos_transformacao = {}
         self.elementos_recorte = {}
+        self.elementos_projecao = {}
 
         # Cache do histórico
         self._historico_cache_str = None
@@ -467,41 +468,43 @@ class PainelControle:
 
         
 
-        # Preenchimento (alinhado conforme solicitado)
-        # Título "Preenchimento:" ao lado direito de Desfazer
-        desf_x, desf_y, desf_w, desf_h = (self.largura_canvas + 10), (self.altura_total - 90), 180, 35
-        limpar_x, limpar_y, limpar_w, limpar_h = (self.largura_canvas + 10), (self.altura_total - 50), 180, 35
+        # Ações, Preenchimento e Módulo 3D
+        y_acoes_base = self.altura_total - 130 # Posição inicial para o bloco inferior
+        
+        # Ações Gerais
+        self.botao_desfazer = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, y_acoes_base), (180, 35)),
+            text='Desfazer', manager=self.ui_manager, object_id='#botao_desfazer')
+        self.botao_limpar = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, y_acoes_base + 40), (180, 35)),
+            text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
+
+        # Preenchimento (alinhado com os botões de Ações)
         gap = 10
-        label_x = desf_x + desf_w + gap
-        label_y = desf_y
+        label_x = self.largura_canvas + 10 + 180 + gap
         self.elementos_transformacao['label_preench'] = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((label_x, label_y), (180, 20)),
+            relative_rect=pygame.Rect((label_x, y_acoes_base), (180, 20)),
             text='Preenchimento:', manager=self.ui_manager
         )
-        # Dois botões (mesma linha do label): Scanline e Recursão
-        # Botão de Scanline ao lado direito de Limpar Tela; Flood Fill ao lado direito de Scanline
         btn_w, btn_h = 95, 35
-        scan_x = limpar_x + limpar_w + gap
+        scan_x = label_x
         flood_x = scan_x + btn_w + gap
-        scan_y = limpar_y
-        flood_y = limpar_y
-
         self.elementos_transformacao['btn_preencher_scan'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((scan_x, scan_y), (btn_w, btn_h)),
+            relative_rect=pygame.Rect((scan_x, y_acoes_base + 30), (btn_w, btn_h)),
             text='Scanline', manager=self.ui_manager, object_id='#preencher_scanline'
         )
         self.elementos_transformacao['btn_preencher_rec'] = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((flood_x, flood_y), (btn_w, btn_h)),
+            relative_rect=pygame.Rect((flood_x, y_acoes_base + 30), (btn_w, btn_h)),
             text='Flood Fill', manager=self.ui_manager, object_id='#preencher_recursao'
         )
 
-        # Ações gerais
-        self.botao_desfazer = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, self.altura_total - 90), (180, 35)),
-            text='Desfazer', manager=self.ui_manager, object_id='#botao_desfazer')
-        self.botao_limpar = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.largura_canvas + 10, self.altura_total - 50), (180, 35)),
-            text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
+        # Módulo 3D
+        self.botao_projecoes = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.largura_canvas + 10, y_acoes_base + 80), (180, 35)),
+            text='Projeções 3D',
+            manager=self.ui_manager,
+            object_id='#botao_projecoes'
+        )
 
     def _construir_recorte_poligonal(self, x_hist: int, y_recorte: int) -> None:
         """Cria os controles de janela poligonal (convexa) para Sutherland–Hodgman,

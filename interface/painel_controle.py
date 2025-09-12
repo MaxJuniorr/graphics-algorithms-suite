@@ -141,8 +141,8 @@ class PainelControle:
             relative_rect=pygame.Rect((self.largura_canvas + 90, 80), (100, 30)),
             manager=self.ui_manager, object_id='#altura_grid'
         )
-        self.entrada_largura.set_text('80')
-        self.entrada_altura.set_text('80')
+        self.entrada_largura.set_text('200')
+        self.entrada_altura.set_text('200')
         self.botao_aplicar_res = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((self.largura_canvas + 10, 120), (180, 40)),
             text='Aplicar Resolução',

@@ -59,23 +59,42 @@ def projecao_cabinet(vertices_3d, angulo_graus=45):
     """ Projeção Cabinet: k = 0.5. """
     return projecao_obliqua(vertices_3d, k=0.5, angulo_graus=angulo_graus)
 
-def projecao_perspectiva(vertices_3d, d=50):
+def projecao_perspectiva(vertices_3d, ponto_observador=(0, 0, -100), plano_z=0):
     """
-    Projeta vértices 3D usando projeção perspectiva simples.
-    O centro de projeção está em (0, 0, -d) e o plano de projeção em z=0.
-    """
-    if d <= 0:
-        raise ValueError("A distância 'd' do plano de projeção deve ser positiva.")
+    Projeta vértices 3D em um plano 2D usando projeção em perspectiva a partir de um ponto de observação.
 
+    Args:
+        vertices_3d (list): Lista de tuplas (x, y, z) dos vértices.
+        ponto_observador (tuple): Coordenadas (cx, cy, cz) do ponto de observação (câmera).
+        plano_z (float): A posição do plano de projeção no eixo Z.
+
+    Returns:
+        list: Lista de tuplas (x, y) dos vértices projetados.
+    """
+    cx, cy, cz = ponto_observador
     vertices_2d = []
+
     for x, y, z in vertices_3d:
-        # Evita divisão por zero ou valores que inverteriam a imagem
-        if (z + d) <= 1e-6:
-            factor = 10000 # Projeta para um ponto muito distante
-        else:
-            factor = d / (z + d)
-            
-        x_proj = x * factor
-        y_proj = y * factor
+        # A distância do ponto ao observador no eixo Z é (cz - z)
+        # Se for zero, o ponto está no mesmo plano perpendicular ao eixo Z que o observador,
+        # o que resultaria em uma divisão por zero (raio de projeção paralelo ao plano).
+        dist_z = cz - z
+        if abs(dist_z) < 1e-6:
+            # Ponto está muito perto do plano do observador, projeção é indefinida.
+            # Poderíamos retornar um ponto muito grande ou simplesmente ignorar.
+            # Por simplicidade, vamos projetar ortogonalmente neste caso.
+            vertices_2d.append((round(x), round(y)))
+            continue
+
+        # A distância do plano de projeção ao observador no eixo Z
+        dist_plano = cz - plano_z
+
+        # Usando semelhança de triângulos:
+        # (x_proj - cx) / dist_plano = (x - cx) / dist_z
+        # x_proj = cx + (x - cx) * dist_plano / dist_z
+        x_proj = cx + (x - cx) * dist_plano / dist_z
+        y_proj = cy + (y - cy) * dist_plano / dist_z
+        
         vertices_2d.append((round(x_proj), round(y_proj)))
+        
     return vertices_2d

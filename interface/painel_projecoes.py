@@ -4,7 +4,7 @@ import pygame_gui
 class PainelProjecoes(pygame_gui.elements.UIWindow):
     def __init__(self, ui_manager, largura_canvas):
         super().__init__(
-            rect=pygame.Rect((largura_canvas, 50), (400, 500)),
+            rect=pygame.Rect((largura_canvas, 50), (400, 600)), # Aumentar altura da janela
             manager=ui_manager,
             window_display_title='Painel de Projeções 3D',
             object_id='#painel_projecoes'
@@ -13,60 +13,88 @@ class PainelProjecoes(pygame_gui.elements.UIWindow):
         self.ui_manager = ui_manager
 
         # --- Controles ---
-        y_inicial = 20
+        y_cursor = 20
         
         # Seleção de Sólido
         pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((10, y_inicial), (150, 20)),
+            relative_rect=pygame.Rect((10, y_cursor), (150, 20)),
             text='Sólido 3D:',
             manager=self.ui_manager,
             container=self
         )
+        y_cursor += 25
         self.seletor_solido = pygame_gui.elements.UIDropDownMenu(
             options_list=['Cubo', 'Poliedro (Vértices)'],
             starting_option='Cubo',
-            relative_rect=pygame.Rect((10, y_inicial + 25), (150, 30)),
+            relative_rect=pygame.Rect((10, y_cursor), (150, 30)),
             manager=self.ui_manager,
             container=self
         )
 
         # Seleção de Projeção
-        y_proj = y_inicial + 70
+        y_cursor += 45
         pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((10, y_proj), (150, 20)),
+            relative_rect=pygame.Rect((10, y_cursor), (150, 20)),
             text='Tipo de Projeção:',
             manager=self.ui_manager,
             container=self
         )
+        y_cursor += 25
         self.seletor_projecao = pygame_gui.elements.UIDropDownMenu(
             options_list=['Ortogonal', 'Perspectiva', 'Cavalier', 'Cabinet'],
             starting_option='Ortogonal',
-            relative_rect=pygame.Rect((10, y_proj + 25), (150, 30)),
+            relative_rect=pygame.Rect((10, y_cursor), (150, 30)),
             manager=self.ui_manager,
             container=self
         )
 
+        # --- Ponto de Observação para Perspectiva ---
+        y_cursor += 45
+        self.label_observador = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((10, y_cursor), (360, 20)),
+            text='Ponto de Observação (para Perspectiva):',
+            manager=self.ui_manager,
+            container=self
+        )
+        y_cursor += 25
+        # Coordenada X
+        self.label_obs_x = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((10, y_cursor), (20, 30)), text='X:', manager=ui_manager, container=self)
+        self.entrada_obs_x = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((35, y_cursor), (80, 30)), manager=ui_manager, container=self)
+        # Coordenada Y
+        self.label_obs_y = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((125, y_cursor), (20, 30)), text='Y:', manager=ui_manager, container=self)
+        self.entrada_obs_y = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((150, y_cursor), (80, 30)), manager=ui_manager, container=self)
+        # Coordenada Z
+        self.label_obs_z = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((240, y_cursor), (20, 30)), text='Z:', manager=ui_manager, container=self)
+        self.entrada_obs_z = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((265, y_cursor), (80, 30)), manager=ui_manager, container=self)
+        
+        self.entrada_obs_x.set_text('0')
+        self.entrada_obs_y.set_text('0')
+        self.entrada_obs_z.set_text('-100')
+
         # --- Entradas para Poliedro Personalizado (escondidas por padrão) ---
-        y_custom = y_proj + 70
+        y_cursor += 45
         self.label_vertices = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((10, y_custom), (360, 20)),
+            relative_rect=pygame.Rect((10, y_cursor), (360, 20)),
             text='Vértices (x,y,z; ...)',
             manager=self.ui_manager,
             container=self
         )
+        y_cursor += 25
         self.entrada_vertices = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((10, y_custom + 25), (360, 30)),
+            relative_rect=pygame.Rect((10, y_cursor), (360, 30)),
             manager=self.ui_manager,
             container=self
         )
+        y_cursor += 40
         self.label_arestas = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((10, y_custom + 65), (360, 20)),
+            relative_rect=pygame.Rect((10, y_cursor), (360, 20)),
             text='Arestas (índice1,índice2; ...)',
             manager=self.ui_manager,
             container=self
         )
+        y_cursor += 25
         self.entrada_arestas = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((10, y_custom + 90), (360, 30)),
+            relative_rect=pygame.Rect((10, y_cursor), (360, 30)),
             manager=self.ui_manager,
             container=self
         )
@@ -82,7 +110,7 @@ class PainelProjecoes(pygame_gui.elements.UIWindow):
 
         # Botão de Desenho
         self.botao_desenhar = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((10, self.get_container().get_size()[1] - 80), (150, 40)),
+            relative_rect=pygame.Rect((10, self.get_container().get_size()[1] - 60), (150, 40)),
             text='Desenhar Projeção',
             manager=self.ui_manager,
             container=self,

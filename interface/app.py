@@ -387,7 +387,16 @@ class Aplicacao:
                 elif tipo_projecao == 'Cabinet':
                     vertices_2d = projecao_cabinet(vertices_3d, angulo_graus=45)
                 elif tipo_projecao == 'Perspectiva':
-                    vertices_2d = projecao_perspectiva(vertices_3d, d=100)
+                    try:
+                        obs_x = int(self.painel_projecoes.entrada_obs_x.get_text())
+                        obs_y = int(self.painel_projecoes.entrada_obs_y.get_text())
+                        obs_z = int(self.painel_projecoes.entrada_obs_z.get_text())
+                        ponto_observador = (obs_x, obs_y, obs_z)
+                        vertices_2d = projecao_perspectiva(vertices_3d, ponto_observador=ponto_observador)
+                    except (ValueError, AttributeError) as e:
+                        print(f"Erro nos parâmetros do ponto de observação: {e}")
+                        # Fallback para projeção padrão se os campos não existirem ou forem inválidos
+                        vertices_2d = projecao_perspectiva(vertices_3d)
             except Exception as e:
                 print(f"Erro ao calcular projeção: {e}")
                 return

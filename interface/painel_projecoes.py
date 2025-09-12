@@ -48,6 +48,22 @@ class PainelProjecoes(pygame_gui.elements.UIWindow):
             container=self
         )
 
+        # --- Ângulo para Projeções Oblíquas ---
+        y_cursor += 45
+        self.label_angulo_obliquo = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((10, y_cursor), (280, 20)),
+            text='Ângulo (para Cavalier/Cabinet):',
+            manager=self.ui_manager,
+            container=self
+        )
+        y_cursor += 25
+        self.entrada_angulo_obliquo = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((10, y_cursor), (100, 30)),
+            manager=self.ui_manager,
+            container=self
+        )
+        self.entrada_angulo_obliquo.set_text('45')
+
         # --- Ponto de Observação para Perspectiva ---
         y_cursor += 45
         self.label_observador = pygame_gui.elements.UILabel(
@@ -116,3 +132,37 @@ class PainelProjecoes(pygame_gui.elements.UIWindow):
             container=self,
             object_id='#desenhar_projecao'
         )
+
+        self.atualizar_visibilidade_controles()
+
+    def atualizar_visibilidade_controles(self):
+        """ Mostra/esconde campos com base nas seleções de dropdown. """
+        if not self.alive():
+            return
+            
+        tipo_solido = self.seletor_solido.selected_option[0]
+        tipo_projecao = self.seletor_projecao.selected_option[0]
+
+        # Controles do poliedro personalizado
+        visivel_poliedro = (tipo_solido == 'Poliedro (Vértices)')
+        self.label_vertices.visible = visivel_poliedro
+        self.entrada_vertices.visible = visivel_poliedro
+        self.label_arestas.visible = visivel_poliedro
+        self.entrada_arestas.visible = visivel_poliedro
+
+        # Controles de perspectiva
+        visivel_perspectiva = (tipo_projecao == 'Perspectiva')
+        self.label_observador.visible = visivel_perspectiva
+        self.label_obs_x.visible = visivel_perspectiva
+        self.entrada_obs_x.visible = visivel_perspectiva
+        self.label_obs_y.visible = visivel_perspectiva
+        self.entrada_obs_y.visible = visivel_perspectiva
+        self.label_obs_z.visible = visivel_perspectiva
+        self.entrada_obs_z.visible = visivel_perspectiva
+
+        # Controles de projeção oblíqua
+        visivel_obliquo = tipo_projecao in ['Cavalier', 'Cabinet']
+        self.label_angulo_obliquo.visible = visivel_obliquo
+        self.entrada_angulo_obliquo.visible = visivel_obliquo
+
+        self.rebuild()

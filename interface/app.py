@@ -133,16 +133,9 @@ class Aplicacao:
                             self.area_desenho.limpar_preview_polilinha()
                 
                     if self.painel_projecoes is not None and evento.ui_element == self.painel_projecoes.seletor_solido:
-                        if evento.text == 'Poliedro (Vértices)':
-                            self.painel_projecoes.label_vertices.show()
-                            self.painel_projecoes.entrada_vertices.show()
-                            self.painel_projecoes.label_arestas.show()
-                            self.painel_projecoes.entrada_arestas.show()
-                        else: # 'Cubo'
-                            self.painel_projecoes.label_vertices.hide()
-                            self.painel_projecoes.entrada_vertices.hide()
-                            self.painel_projecoes.label_arestas.hide()
-                            self.painel_projecoes.entrada_arestas.hide()
+                        self.painel_projecoes.atualizar_visibilidade_controles()
+                    elif self.painel_projecoes is not None and evento.ui_element == self.painel_projecoes.seletor_projecao:
+                        self.painel_projecoes.atualizar_visibilidade_controles()
                 elif evento.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
                     if evento.ui_element == self.painel_controle.lista_historico:
                         self.manipular_selecao_historico(evento)
@@ -378,14 +371,19 @@ class Aplicacao:
                 print("Sólido não reconhecido ou sem vértices.")
                 return
 
+            try:
+                angulo_obliquo = int(self.painel_projecoes.entrada_angulo_obliquo.get_text())
+            except (ValueError, AttributeError):
+                angulo_obliquo = 45 # Valor padrão em caso de erro
+
             vertices_2d = []
             try:
                 if tipo_projecao == 'Ortogonal':
                     vertices_2d = projecao_ortogonal(vertices_3d, plano='frontal')
                 elif tipo_projecao == 'Cavalier':
-                    vertices_2d = projecao_cavalier(vertices_3d, angulo_graus=45)
+                    vertices_2d = projecao_cavalier(vertices_3d, angulo_graus=angulo_obliquo)
                 elif tipo_projecao == 'Cabinet':
-                    vertices_2d = projecao_cabinet(vertices_3d, angulo_graus=45)
+                    vertices_2d = projecao_cabinet(vertices_3d, angulo_graus=angulo_obliquo)
                 elif tipo_projecao == 'Perspectiva':
                     try:
                         obs_x = int(self.painel_projecoes.entrada_obs_x.get_text())

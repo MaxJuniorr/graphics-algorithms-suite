@@ -1,6 +1,11 @@
 # Graphics Algorithms Suite
 
+Trabalho final da disciplina de Computação Gráfica com o professor Bianchi Serique Meiguins. 
+
 Aplicação didática (Python + pygame-ce + pygame_gui) para estudar e demonstrar algoritmos clássicos de Computação Gráfica em uma grade cartesiana interativa. O foco é visualizar passo a passo desenho de linhas e curvas, preenchimentos, recorte de linhas/polígonos, transformações geométricas e projeções 3D — com interface amigável e comentários no código que servem como roteiro de apresentação/estudo.
+
+## Explicação no youtube: 
+![Playlist Trabalho final de computação gráfica](https://www.youtube.com/playlist?list=PLeUnahGUNxlTmsYc6Vz_gTyLftrJT5kj8) 
 
 ## 🎯 Objetivo central
 - Fornecer um ambiente visual para praticar algoritmos de rasterização, preenchimento, recorte, transformações 2D e projeções 3D;

@@ -4,11 +4,8 @@ import pygame_gui
 from interface.painel_controle import PainelControle
 from interface.painel_projecoes import PainelProjecoes
 from interface.area_desenho import AreaDesenho
-from algoritmos.bresenham import calcular_linha_bresenham
 from algoritmos.circulo_elipse import calcular_circulo, calcular_elipse
-from algoritmos.curvas_bezier import rasterizar_curva_bezier
-from algoritmos.polilinha import rasterizar_polilinha
-from algoritmos.preenchimento import preencher_scanline, preencher_recursao, preencher_flood_canvas, preencher_scanline_multi
+from algoritmos.preenchimento import preencher_scanline, preencher_flood_canvas, preencher_scanline_multi
 from algoritmos.recorte import cohen_sutherland_clip, sutherland_hodgman_clip, suth_hodgman_clip_convexo
 from algoritmos.projecoes import (
     obter_cubo_padrao, obter_arestas_cubo, projecao_ortogonal,

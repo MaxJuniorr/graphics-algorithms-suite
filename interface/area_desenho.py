@@ -13,6 +13,20 @@ COR_SELECIONADO = (255, 255, 0)
 
 
 class AreaDesenho:
+    """
+    Canvas baseado em grade cartesiana, com gerenciamento de histórico e
+    rasterização de formas para pixels do grid.
+
+    Principais responsabilidades:
+    - Manter resolução da grade (largura x altura) e calcular o tamanho das
+        células em pixels (tamanho_celula_x/y) de acordo com o tamanho da janela;
+    - Desenhar a grade e eixos (x=0, y=0) para referência visual;
+    - Gerenciar o histórico (adicionar, remover, desfazer, seleção atual);
+    - Rasterizar e desenhar cada item do histórico por tipo (linha, círculo,
+        elipse, Bézier, polilinha, pontos);
+    - Exibir pré-visualizações (polilinha em construção e janela convexa);
+    - Converter coordenadas de tela (pixels) para coordenadas de grade (inteiros).
+    """
     def __init__(self, largura, altura, largura_grid, altura_grid):
         self.largura = largura
         self.altura = altura
@@ -46,6 +60,11 @@ class AreaDesenho:
         self.preview_clip_poligono = None
 
     def atualizar_resolucao_grid(self, nova_largura, nova_altura):
+        """
+        Define uma nova resolução de grade (quantidade de células horizontais e
+        verticais) e recalcula o tamanho de cada célula em pixels. Limpa a tela
+        para refletir a nova resolução.
+        """
         self.largura_grid = nova_largura
         self.altura_grid = nova_altura
         self.tamanho_celula_x = (self.largura / self.largura_grid) if self.largura_grid > 0 else 0
@@ -53,6 +72,10 @@ class AreaDesenho:
         self.limpar_pixels()
 
     def desenhar_grade(self):
+        """
+        Desenha linhas verticais e horizontais igualmente espaçadas conforme a
+        resolução de grade atual. Os eixos x=0 e y=0 são destacados.
+        """
         centro_x, centro_y = self.largura / 2, self.altura / 2
         half_w = self.largura_grid // 2
         half_h = self.altura_grid // 2
@@ -68,6 +91,15 @@ class AreaDesenho:
             pygame.draw.line(self.surface, cor, (0, pos_y), (self.largura, pos_y))
 
     def desenhar_pixel(self, x_grid, y_grid, cor=COR_PIXEL):
+        """
+        Pinta a célula correspondente às coordenadas de grade (x_grid, y_grid).
+
+        Conversão grade→tela:
+        - Origem no centro da superfície (cx, cy);
+        - Eixo x positivo para a direita; y positivo para cima (logo, ao ir para
+          cima no grid, a coordenada de tela diminui);
+        - O retângulo desenhado tem o tamanho de uma célula (tamanho_celula_x/y).
+        """
         if self.tamanho_celula_x <= 0 or self.tamanho_celula_y <= 0:
             return
         cx, cy = self.largura / 2, self.altura / 2
@@ -113,6 +145,13 @@ class AreaDesenho:
         return self.indice_selecionado
 
     def desenhar(self, tela):
+        """
+        Redesenha completamente a área de desenho:
+        1) Fundo + grade + eixos
+        2) Janela retangular de recorte (se houver)
+        3) Formas do histórico rasterizadas (com destaque para a seleção)
+        4) Pré-visualizações (polilinha e janela convexa)
+        """
         self.surface.fill(COR_FUNDO)
         self.desenhar_grade()
 
@@ -150,6 +189,11 @@ class AreaDesenho:
         tela.blit(self.surface, (0, 0))
 
     def rasterizar_desenho(self, desenho):
+        """
+        Converte um item do histórico (tipo + parâmetros) na lista de pixels de
+        grade que devem ser pintados. Para curvas/linhas, delega para os módulos
+        de algoritmos correspondentes; para "Pontos" retorna diretamente.
+        """
         tipo = desenho.tipo
         params = desenho.parametros
         if tipo == "Linha (Bresenham)":
@@ -168,6 +212,14 @@ class AreaDesenho:
         return []
 
     def tela_para_grade(self, x_tela, y_tela):
+        """
+        Converte coordenadas de tela (em pixels, origem no canto superior
+        esquerdo) para coordenadas de grade inteiras.
+
+        Fórmulas:
+        - x_grid = floor((x_tela - cx) / tamanho_celula_x)
+        - y_grid = floor((cy - y_tela) / tamanho_celula_y)
+        """
         if self.tamanho_celula_x <= 0 or self.tamanho_celula_y <= 0:
             return 0, 0
         cx, cy = self.largura / 2, self.altura / 2

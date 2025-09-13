@@ -1,8 +1,54 @@
 import pygame
 import pygame_gui
 
+# -----------------------------------------------------------------------------
+# Painel de Controles da Interface (lado direito)
+# -----------------------------------------------------------------------------
+# Este módulo constrói e organiza todos os controles de UI usados para:
+# - Configurar a grade (resolução em células)
+# - Escolher a figura/algoritmo a desenhar
+# - Inserir coordenadas e acionar o desenho
+# - Gerenciar histórico (lista de desenhos criados e sua seleção)
+# - Aplicar recorte (linhas: Cohen–Sutherland; polígonos: Sutherland–Hodgman)
+# - Aplicar transformações (translação, escala, rotação) sobre o item selecionado
+# - Acionar o painel de Projeções 3D quando a opção correspondente estiver ativa
+#
+# Organização visual (resumo):
+# - Faixa direita da janela (ao lado do canvas):
+#   • Topo: Título e lista do histórico + painel de recorte logo abaixo
+#   • Em seguida: Configuração da grade
+#   • Abaixo: Dropdown de seleção de figura e grupos de campos por figura
+#   • Mais abaixo: Transformações 2D
+#   • Rodapé: Ações gerais (Desfazer / Limpar) e botões de preenchimento
+#
+# Decisões de design:
+# - Cada grupo de controles (linha, círculo, etc.) é mantido em um dicionário
+#   separado (self.elementos_<figura>) para facilitar show/hide conforme a seleção.
+# - O painel de recorte aparece conforme o tipo do item selecionado no histórico:
+#   • Linha → exibe campos de margens (left, bottom, right, top) + botão aplicar
+#   • Polilinha → exibe janela poligonal (convexa) por clique + campo de texto
+# - Os controles de Projeções 3D aparecem somente quando a figura selecionada é
+#   “Projeções 3D”; o botão abre um painel próprio (painel_projecoes.py).
+# -----------------------------------------------------------------------------
+
 
 class PainelControle:
+    """
+    Constrói e gerencia o painel lateral de controles.
+
+    Responsabilidades:
+    - Criar widgets (labels, textboxes, botões) e posicioná-los por seções;
+    - Manter cada seção em dicionários para alternância de visibilidade;
+    - Atualizar a lista do histórico e o subtítulo do painel de Recorte;
+    - Exibir apenas os controles da figura selecionada no dropdown;
+    - Expor botões de ação (desenhar, recortar, transformar, preencher, etc.).
+
+    Parâmetros do construtor:
+    - ui_manager: instância do pygame_gui para criação/gerência dos elementos;
+    - largura_painel: largura útil do painel (em pixels);
+    - altura_total: altura total da janela para âncoras verticais;
+    - largura_canvas: largura do canvas (para calcular o x inicial do painel).
+    """
     def __init__(self, ui_manager, largura_painel, altura_total, largura_canvas):
         self.ui_manager = ui_manager
         self.largura_painel = largura_painel
@@ -10,6 +56,8 @@ class PainelControle:
         self.largura_canvas = largura_canvas
 
         # Dicionários para armazenar elementos
+        # Observação: manter cada grupo coeso facilita esconder/mostrar os
+        # widgets relevantes quando o usuário alterna a figura no dropdown.
         self.elementos_linha = {}
         self.elementos_circulo = {}
         self.elementos_bezier = {}
@@ -24,6 +72,8 @@ class PainelControle:
         self.elementos_projecao = {}
 
         # Cache do histórico
+        # Armazena uma assinatura do conteúdo exibido no histórico para evitar
+        # re-renderizações desnecessárias ao atualizar a mesma lista.
         self._historico_cache_str = None
 
         # Estado do triângulo regular
@@ -34,6 +84,17 @@ class PainelControle:
         self.mostrar_elementos_figura('Linha (Bresenham)')
 
     def construir_interface(self):
+        """
+        Cria todos os elementos do painel, separados por blocos lógicos.
+
+        Layout principal por blocos (na ordem vertical em que aparecem):
+        1) Histórico de desenhos e Recorte (lado direito superior)
+        2) Configuração da Grade (largura/altura em células)
+        3) Seleção de figura e campos específicos por figura
+        4) Transformações 2D (aplicadas ao item selecionado no histórico)
+        5) Ações gerais e Preenchimento (rodapé)
+        6) Botão do módulo 3D (mostrado somente quando figura = Projeções 3D)
+        """
         # Histórico (painel à direita)
         margem_direita = 10
         self.largura_historico = 200
@@ -59,6 +120,9 @@ class PainelControle:
         )
 
         # Recorte (abaixo do histórico)
+        # Dois submodos de UI convivem aqui, com visibilidade alternada:
+        # - Recorte de linha por margem (Cohen–Sutherland) → 4 campos e botão
+        # - Recorte de polígono (Sutherland–Hodgman) → janela convexa por clique
         y_recorte = self.altura_historico + 40
         x_hist = self.posicao_x_historico
         # Título
@@ -118,6 +182,9 @@ class PainelControle:
             comp.hide()
 
         # Configuração de grade
+        # Entrada de resolução utilizada para recalcular o espaçamento da malha
+        # do canvas (área de desenho). Não altera o tamanho da janela, apenas a
+        # granularidade das células para rasterização/exibição.
         pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((self.largura_canvas + 10, 10), (180, 20)),
             text='Configuração da Grade',
@@ -150,6 +217,8 @@ class PainelControle:
         )
 
         # Seleção de figura
+        # Dropdown principal que controla qual grupo de widgets ficará visível.
+        # As opções cobrem os algoritmos/figuras implementados no projeto.
         pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect((self.largura_canvas + 10, 180), (180, 20)),
             text='Selecione a Figura',
@@ -178,7 +247,9 @@ class PainelControle:
             self.elementos_linha[k].set_text(v)
         self.elementos_linha['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (180, 40)), text='Desenhar Linha', manager=self.ui_manager, object_id='#botao_bresenham')
 
-        # --- Círculo ---
+    # --- Círculo ---
+    # Padrão de inputs: centro (cx, cy) e raio. O botão "Def" ao lado de
+    # cada linha habilita a definição via clique no canvas.
         self.elementos_circulo['label_centro'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (60, 20)), text='Centro:', manager=self.ui_manager)
         self.elementos_circulo['centro_x'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 70, base_y), (50, 30)), manager=self.ui_manager)
         self.elementos_circulo['centro_y'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 125, base_y), (50, 30)), manager=self.ui_manager)
@@ -191,6 +262,9 @@ class PainelControle:
         self.elementos_circulo['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 80), (210, 40)), text='Desenhar Círculo', manager=self.ui_manager, object_id='#botao_circulo')
 
         # --- Curva de Bézier ---
+        # 4 pontos de controle (P0..P3). Cada linha possui (x, y) e um botão
+        # "Def" para markar via clique. O algoritmo de rasterização está em
+        # algoritmos/curvas_bezier.py.
         pontos_bezier = ['P0', 'P1', 'P2', 'P3']
         coords_ini = [('-30', '-10'), ('-10', '30'), ('10', '-30'), ('30', '10')]
         for i, (p, coords) in enumerate(zip(pontos_bezier, coords_ini)):
@@ -203,7 +277,9 @@ class PainelControle:
             self.elementos_bezier[f'{p.lower()}_y'].set_text(coords[1])
         self.elementos_bezier['botao'] = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 170), (180, 40)), text='Desenhar Curva', manager=self.ui_manager, object_id='#botao_bezier')
 
-        # --- Elipse ---
+    # --- Elipse ---
+    # Entradas: centro (cx, cy) e raios (rx, ry). Rasterização pelo método
+    # midpoint em algoritmos/circulo_elipse.py.
         self.elementos_elipse['label_centro'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (60, 20)), text='Centro:', manager=self.ui_manager)
         self.elementos_elipse['centro_x'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 70, base_y), (50, 30)), manager=self.ui_manager)
         self.elementos_elipse['centro_y'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 125, base_y), (50, 30)), manager=self.ui_manager)
@@ -257,6 +333,9 @@ class PainelControle:
             self.elementos_triangulo[k].set_text(v)
 
     # --- Polilinha ---
+        # Campo único de entrada de pontos no formato "x,y; x,y; ..." e botões
+        # para construção por clique no canvas (inicia/finaliza) e opção de
+        # fechar a polilinha ligando o último ponto ao primeiro.
         self.elementos_polilinha['label'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y), (220, 20)), text='Pontos (x1,y1; x2,y2; ...):', manager=self.ui_manager)
         self.elementos_polilinha['entrada_pontos'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 10, base_y + 30), (210, 30)), manager=self.ui_manager)
         self.elementos_polilinha['entrada_pontos'].set_text('-10,-10; 0,20; 10,-10; 20,20')
@@ -445,6 +524,9 @@ class PainelControle:
         )
 
         # Translação
+        # Aplica (dx, dy) ao objeto selecionado no histórico. O clique nos
+        # botões "Aplicar" é roteado em interface/app.py para chamar
+        # algoritmos/transformacoes.py.
         y_offset = base_y_transf + 30
         self.elementos_transformacao['label_trans'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset), (140, 20)), text='Translação (dx, dy):', manager=self.ui_manager)
         self.elementos_transformacao['trans_x'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, y_offset), (50, 30)), manager=self.ui_manager)
@@ -454,6 +536,8 @@ class PainelControle:
         self.elementos_transformacao['trans_y'].set_text('5')
 
         # Escala
+        # Aplica (sx, sy) em relação a um ponto fixo (cx, cy). Se o ponto fixo
+        # for (0,0), a escala é feita em torno da origem do sistema.
         y_offset = base_y_transf + 70
         self.elementos_transformacao['label_escala'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset), (140, 20)), text='Escala (sx, sy):', manager=self.ui_manager)
         self.elementos_transformacao['escala_sx'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, y_offset), (50, 30)), manager=self.ui_manager)
@@ -468,6 +552,8 @@ class PainelControle:
         self.elementos_transformacao['escala_cy'].set_text('0')
 
         # Rotação
+        # Rotaciona pelo ângulo (em graus) em torno de um pivô (px, py).
+        # O módulo de transformações trata a conversão para radianos.
         y_offset = base_y_transf + 140
         self.elementos_transformacao['label_rot'] = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((self.largura_canvas + 10, y_offset), (140, 20)), text='Rotação (ângulo):', manager=self.ui_manager)
         self.elementos_transformacao['rot_angulo'] = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((self.largura_canvas + 150, y_offset), (105, 30)), manager=self.ui_manager)
@@ -487,7 +573,7 @@ class PainelControle:
 
         
 
-        # Ações, Preenchimento e Módulo 3D
+    # Ações, Preenchimento e Módulo 3D
         y_acoes_base = self.altura_total - 80  # Posição inicial para o bloco inferior (mais embaixo)
 
         # Ações Gerais
@@ -499,6 +585,8 @@ class PainelControle:
             text='Limpar Tela', manager=self.ui_manager, object_id='#botao_limpar')
 
         # Preenchimento (alinhado com os botões de Ações)
+        # Dois modos: Scanline (polígonos) e Flood Fill (semente/contorno). A ação
+        # é aplicada à seleção atual do histórico.
         gap = 10
         label_x = self.largura_canvas + 10 + 180 + gap
         self.elementos_transformacao['label_preench'] = pygame_gui.elements.UILabel(
@@ -518,6 +606,8 @@ class PainelControle:
         )
 
         # Módulo 3D (mostra apenas quando a figura 'Projeções 3D' é selecionada)
+        # Este botão serve de atalho para abrir o painel de configuração das
+        # Projeções 3D (definição do sólido, tipo de projeção, etc.).
         self.elementos_projecao['botao'] = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((self.largura_canvas + 10, 250), (180, 35)),
             text='Coordenadas 3D',
@@ -528,8 +618,14 @@ class PainelControle:
         self.elementos_projecao['botao'].hide()
 
     def _construir_recorte_poligonal(self, x_hist: int, y_recorte: int) -> None:
-        """Cria os controles de janela poligonal (convexa) para Sutherland–Hodgman,
+        """
+        Cria os controles de janela poligonal (convexa) para Sutherland–Hodgman,
         ancorados imediatamente abaixo do título de Recorte.
+
+        Controles criados:
+        - Botões Iniciar/Finalizar para captura por clique no canvas da janela
+          de recorte (polígono convexo);
+        - Campo de texto para edição manual dos vértices (x1,y1; x2,y2; ...).
         """
         y = y_recorte + 25
         self.elementos_recorte['label_clip_poly'] = pygame_gui.elements.UILabel(
@@ -552,6 +648,13 @@ class PainelControle:
         self.elementos_recorte['entrada_clip_pontos'].set_text('-20,-20; 20,-20; 20,20; -20,20')
 
     def mostrar_elementos_figura(self, figura):
+        """
+        Mostra apenas o conjunto de widgets relativos à figura escolhida no
+        dropdown, escondendo todos os demais grupos.
+
+        Observação: o histórico e o painel de recorte não são afetados aqui;
+        eles são controlados por atualizar_historico conforme a seleção atual.
+        """
         for grupo in [self.elementos_linha, self.elementos_circulo, self.elementos_bezier, self.elementos_elipse, self.elementos_polilinha, self.elementos_triangulo, self.elementos_quadrilatero, self.elementos_pentagono, self.elementos_hexagono, self.elementos_projecao]:
             for comp in grupo.values():
                 comp.hide()
@@ -567,6 +670,12 @@ class PainelControle:
             comp.show()
 
     def atualizar_historico(self, historico, indice_selecionado):
+        """
+        Atualiza a lista do histórico e alterna a visibilidade do painel Recorte
+        de acordo com o tipo do item selecionado:
+        - Linha (Bresenham) → mostra campos de margens (Cohen–Sutherland)
+        - Polilinha → mostra janela poligonal (Sutherland–Hodgman)
+        """
         assinatura_desenhos = '|'.join(str(d.timestamp) for d in historico)
         assinatura_completa = f"{len(historico)}:{indice_selecionado}:{assinatura_desenhos}"
 

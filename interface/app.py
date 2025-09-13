@@ -26,6 +26,7 @@ ALTURA_CANVAS = ALTURA_TOTAL
 COR_PAINEL = (60, 60, 60)
 
 class Aplicacao:
+    # Laço principal da aplicação e roteamento de eventos da UI.
     def __init__(self, largura_grid_inicial, altura_grid_inicial):
         pygame.init()
         self.tela = pygame.display.set_mode((LARGURA_TOTAL, ALTURA_TOTAL))
@@ -44,9 +45,13 @@ class Aplicacao:
         self.painel_projecoes = None
 
     def _vertices_para_preenchimento(self, desenho, num_segmentos: int = 72):
-        """Retorna uma lista de vértices inteiros que define um polígono fechado
-        equivalente ao desenho selecionado, sem modificar o desenho original.
-        Suporta: Polilinha, Círculo, Elipse.
+        """
+        Constrói um conjunto de vértices para preenchimento via Scanline,
+        sem alterar o tipo do desenho original.
+
+        Suporta diretamente:
+        - Polilinha: retorna a cadeia, garantindo fechamento último→primeiro;
+        - Círculo/Elipse: retorna uma aproximação poligonal com num_segmentos.
         """
         params = desenho.parametros
         if desenho.tipo == "Polilinha":
@@ -88,12 +93,24 @@ class Aplicacao:
         return []
 
     def executar(self):
+        """
+        Game loop de 60 FPS: coleta eventos, atualiza estados/preview, redesenha.
+
+        Etapas por frame:
+        1) process_events: mapeia cliques em canvas/controles e dropdowns;
+        2) atualizar_historico: sincroniza lista e painel de recorte;
+        3) atualizar janela de recorte visual (retângulo ou polígono) com base
+           nos campos de entrada atuais, tolerando valores inválidos;
+        4) update + draw: UI e canvas são redesenhados, depois flip no display.
+        """
         while self.rodando:
             delta_time = self.clock.tick(60) / 1000.0
             for evento in pygame.event.get():
                 if evento.type == pygame.QUIT:
                     self.rodando = False
                 if evento.type == pygame.MOUSEBUTTONDOWN:
+                    # Clique no canvas define coordenadas para o próximo campo
+                    # marcado com "Def" (quando self.proximo_clique_define setado).
                     if self.proximo_clique_define and evento.pos[0] < LARGURA_CANVAS:
                         coords = self.area_desenho.tela_para_grade(*evento.pos)
                         self.definir_coordenadas_por_clique(coords)
@@ -117,6 +134,8 @@ class Aplicacao:
                         self.area_desenho.definir_preview_clip_poligono(self.clip_poly_pontos)
                 self.ui_manager.process_events(evento)
                 if evento.type == pygame_gui.UI_BUTTON_PRESSED:
+                    # Qualquer clique em botão da UI é roteado para um handler
+                    # único que despacha por elemento.
                     self.manipular_eventos_ui(evento)
                 elif evento.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     if evento.ui_element == self.painel_controle.seletor_figura:
@@ -132,6 +151,7 @@ class Aplicacao:
                         else:
                             self.area_desenho.limpar_preview_polilinha()
                 
+                    # Reage a mudanças de seleção no painel de projeções (se aberto)
                     if self.painel_projecoes is not None and evento.ui_element == self.painel_projecoes.seletor_solido:
                         self.painel_projecoes.atualizar_visibilidade_controles()
                     elif self.painel_projecoes is not None and evento.ui_element == self.painel_projecoes.seletor_projecao:
@@ -229,6 +249,9 @@ class Aplicacao:
             desenho.parametros['pontos'] = novos_pontos
 
     def _converter_para_polilinha(self, desenho):
+        # Conversão de figuras paramétricas (Círculo/Elipse) para polilinha
+        # para que transformações gerais (escala/rotação não-uniformes) possam
+        # ser aplicadas ponto a ponto quando necessário.
         print(f"Convertendo '{desenho.tipo}' para Polilinha.")
         pontos = []
         params = desenho.parametros
@@ -253,6 +276,13 @@ class Aplicacao:
         return pontos
 
     def definir_coordenadas_por_clique(self, coords):
+        """
+        Recebe coordenadas em grade a partir de um clique no canvas e injeta
+        o valor no campo associado ao último botão "Def" clicado.
+
+        Também suporta um modo especial ('flood') para acionar Flood Fill com
+        seed em coordenadas de grade.
+        """
         tipo_figura, ponto = self.proximo_clique_define
         x_str, y_str = str(coords[0]), str(coords[1])
         if tipo_figura == 'linha':
@@ -310,6 +340,11 @@ class Aplicacao:
         
 
     def manipular_selecao_historico(self, evento):
+        """
+        Alterna seleção no histórico. Um novo clique no item já selecionado
+        desseleciona (toggle). A lista de strings tem prefixo "* " no item
+        atualmente selecionado, mas o índice é extraído pelo prefixo "N.".
+        """
         item_selecionado = evento.text
         if not item_selecionado:
             self.area_desenho.selecionar_desenho(None)
@@ -328,17 +363,33 @@ class Aplicacao:
             self.area_desenho.selecionar_desenho(None)
 
     def manipular_eventos_ui(self, evento):
+        """
+        Roteador central de cliques de botões da UI.
+
+        Despacha por elemento, agrupado em blocos:
+        - Configurações e Projeções 3D
+        - Desenho de figuras
+        - Polilinha (texto e por clique)
+        - Recorte (margens e janela convexa)
+        - Transformações (trans/escala/rotação)
+        - Preenchimentos (scanline e flood)
+        - Botões de definição (Def) e ações gerais (limpar/desfazer)
+        """
         painel = self.painel_controle
         if evento.ui_element == painel.botao_aplicar_res:
             try:
                 self.area_desenho.atualizar_resolucao_grid(int(painel.entrada_largura.get_text()), int(painel.entrada_altura.get_text()))
             except ValueError: print("Erro: A resolução deve ser um número inteiro.")
         elif evento.ui_element == painel.elementos_projecao.get('botao'):
+            # Abre (ou foca) o painel de Projeções 3D, que contém os controles
+            # de tipo de sólido, projeção e parâmetros opcionais.
             if self.painel_projecoes is None or not self.painel_projecoes.alive():
                 self.painel_projecoes = PainelProjecoes(self.ui_manager, LARGURA_CANVAS)
             else:
                 self.painel_projecoes.focus()
         elif self.painel_projecoes is not None and evento.ui_element == self.painel_projecoes.botao_desenhar:
+            # Lê parâmetros do painel e projeta o sólido 3D para 2D, em seguida
+            # monta uma cadeia contínua (polilinha única) que percorre arestas.
             if self.painel_projecoes is None or not self.painel_projecoes.alive():
                 return  # Painel não está visível
 
@@ -403,8 +454,9 @@ class Aplicacao:
                 print("Falha ao projetar os vértices.")
                 return
 
-            # Constrói uma cadeia contínua que percorre todas as arestas (pode repetir vértices/arestas)
-            # para representar a projeção inteira como uma única Polilinha.
+            # Constrói uma cadeia contínua que percorre todas as arestas (pode
+            # repetir vértices/arestas) para representar a projeção inteira como
+            # uma única Polilinha.
             try:
                 n = len(vertices_2d)
                 adj = {i: set() for i in range(n)}
